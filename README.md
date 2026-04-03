@@ -1,17 +1,38 @@
-# personal_cfo
+# Personal CFO
 
-A new Flutter project.
+Personal CFO is a Flutter-based personal finance management app that helps users track accounts, expenses, transfers, and financial analytics.
 
-## Getting Started
+## Features
+- Account management
+- Expense tracking
+- Transfer between accounts
+- Dashboard analytics
+- Spending breakdown charts
+- SQLite local database
 
-This project is a starting point for a Flutter application.
+## Tech Stack
+- Flutter
+- Dart
+- SQLite (sqflite)
+- fl_chart
 
-A few resources to get you started if this is your first Flutter project:
+## Screens
+- Dashboard
+- Accounts
+- Add Transaction
+- Transfer
+- Analytics
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Upcoming Features
+- Income tracking
+- Budget planning
+- Monthly reports
+- Export to CSV
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Installation
+
+1. Clone the repository
+2. Run:
+
+## Author
+Avishak Dhar
