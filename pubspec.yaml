@@ -1,0 +1,74 @@
+name: personal_cfo
+description: "AI Personal Finance Manager — tracks accounts, budgets, goals, investments, and provides AI-powered insights."
+publish_to: 'none'
+
+version: 2.0.0+1
+
+environment:
+  sdk: ^3.11.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State management
+  flutter_riverpod: ^2.5.1
+
+  # Database
+  sqflite: ^2.3.3
+  path: ^1.9.0
+
+  # Networking (AI API calls)
+  http: ^1.2.2
+
+  # Date/number formatting
+  intl: ^0.19.0
+
+  # Charts
+  fl_chart: ^0.68.0
+
+  # Auth — PIN & biometric
+  local_auth: ^2.3.0
+
+  # Secure key storage (Claude API key)
+  flutter_secure_storage: ^9.2.2
+
+  # General persistent settings
+  shared_preferences: ^2.3.3
+
+  # File system access (export/backup)
+  path_provider: ^2.1.4
+
+  # Share / open files
+  share_plus: ^10.0.0
+
+  # CSV generation
+  csv: ^6.0.0
+
+  # Camera / gallery (receipt scanning)
+  image_picker: ^1.1.2
+
+  # File picker (backup restore)
+  file_picker: ^8.1.3
+
+  # In-app notifications
+  flutter_local_notifications: ^17.2.4
+
+  # Hashing (PIN storage)
+  crypto: ^3.0.3
+
+  # Voice / speech-to-text
+  speech_to_text: ^6.6.2
+
+  # Google Sign-In (for Google Drive backup)
+  google_sign_in: ^6.2.2
+
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
