@@ -95,51 +95,61 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                 onChanged: (_) => _updateFilter(),
               )
             : const Text('Transactions'),
-        actions: [
-          if (_filterStart != null)
-            IconButton(
-              icon: const Icon(Icons.filter_alt),
-              tooltip: 'Clear date filter',
-              color: Theme.of(context).colorScheme.primary,
-              onPressed: _clearDateFilter,
-            ),
-          IconButton(
-            icon: const Icon(Icons.date_range_outlined),
-            tooltip: 'Filter by date range',
-            onPressed: _showDateFilter,
-          ),
-          IconButton(
-            icon: const Icon(Icons.document_scanner_outlined),
-            tooltip: 'Scan receipt',
-            onPressed: () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const ReceiptScanScreen())).then((_) {
-              ref.invalidate(transactionsProvider);
-              ref.invalidate(accountsProvider);
-              ref.invalidate(dashboardProvider);
-            }),
-          ),
-          IconButton(
-            icon: Icon(_showSearch ? Icons.close : Icons.search),
-            onPressed: () {
-              setState(() {
-                _showSearch = !_showSearch;
-                if (!_showSearch) {
-                  _searchCtrl.clear();
-                  _updateFilter();
-                }
-              });
-            },
-          ),
-        ],
+        actions: _showSearch
+            ? [
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () {
+                    setState(() { _showSearch = false; _searchCtrl.clear(); });
+                    _updateFilter();
+                  },
+                ),
+              ]
+            : [
+                if (_filterStart != null)
+                  IconButton(
+                    icon: const Icon(Icons.filter_alt_off),
+                    tooltip: 'Clear date filter',
+                    color: Theme.of(context).colorScheme.primary,
+                    onPressed: _clearDateFilter,
+                  ),
+                IconButton(
+                  icon: const Icon(Icons.date_range_outlined),
+                  tooltip: 'Filter by date range',
+                  onPressed: _showDateFilter,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.search),
+                  onPressed: () => setState(() => _showSearch = true),
+                ),
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert),
+                  onSelected: (v) {
+                    if (v == 'scan') {
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (_) => const ReceiptScanScreen())).then((_) {
+                        ref.invalidate(transactionsProvider);
+                        ref.invalidate(accountsProvider);
+                        ref.invalidate(dashboardProvider);
+                      });
+                    }
+                  },
+                  itemBuilder: (_) => [
+                    const PopupMenuItem(value: 'scan', child: Text('Scan Receipt')),
+                  ],
+                ),
+              ],
         bottom: TabBar(
           controller: _tabCtrl,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
           tabs: _tabs.map((t) => Tab(text: t)).toList(),
         ),
       ),
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          FloatingActionButton.small(
+          FloatingActionButton(
             heroTag: 'income',
             onPressed: () => Navigator.push(
               context,

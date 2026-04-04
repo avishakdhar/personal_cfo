@@ -247,6 +247,7 @@ class TransactionsNotifier extends AsyncNotifier<List<TransactionModel>> {
     ref.invalidateSelf();
     ref.invalidate(accountsProvider);
     ref.invalidate(dashboardProvider);
+    ref.invalidate(budgetSpentProvider);
   }
 
   Future<void> addIncome({
@@ -264,6 +265,7 @@ class TransactionsNotifier extends AsyncNotifier<List<TransactionModel>> {
     ref.invalidateSelf();
     ref.invalidate(accountsProvider);
     ref.invalidate(dashboardProvider);
+    ref.invalidate(budgetSpentProvider);
   }
 
   Future<void> transfer({
@@ -288,6 +290,7 @@ class TransactionsNotifier extends AsyncNotifier<List<TransactionModel>> {
     ref.invalidateSelf();
     ref.invalidate(accountsProvider);
     ref.invalidate(dashboardProvider);
+    ref.invalidate(budgetSpentProvider);
   }
 
   Future<void> refresh() async {
@@ -303,6 +306,7 @@ class DashboardData {
   final double netWorth;
   final double todaySpending;
   final double monthlySpending;
+  final double monthlyIncome;
   final Map<String, double> categorySpending;
 
   const DashboardData({
@@ -311,6 +315,7 @@ class DashboardData {
     required this.netWorth,
     required this.todaySpending,
     required this.monthlySpending,
+    required this.monthlyIncome,
     required this.categorySpending,
   });
 }
@@ -324,6 +329,7 @@ final dashboardProvider = FutureProvider<DashboardData>((ref) async {
     db.getTotalLiabilities(),
     db.getTodaySpending(),
     db.getTotalSpending(month: now.month, year: now.year),
+    db.getTotalIncome(month: now.month, year: now.year),
     db.getCategorySpending(month: now.month, year: now.year),
   ]);
 
@@ -331,7 +337,8 @@ final dashboardProvider = FutureProvider<DashboardData>((ref) async {
   final liabilities = results[1] as double;
   final today = results[2] as double;
   final monthly = results[3] as double;
-  final categories = results[4] as Map<String, double>;
+  final income = results[4] as double;
+  final categories = results[5] as Map<String, double>;
 
   return DashboardData(
     totalAssets: assets,
@@ -339,6 +346,7 @@ final dashboardProvider = FutureProvider<DashboardData>((ref) async {
     netWorth: assets - liabilities,
     todaySpending: today,
     monthlySpending: monthly,
+    monthlyIncome: income,
     categorySpending: categories,
   );
 });
@@ -477,9 +485,13 @@ class DebtsNotifier extends AsyncNotifier<List<Debt>> {
     ref.invalidateSelf();
   }
 
-  Future<void> recordEmi(int debtId, double amount) async {
-    await DatabaseHelper.instance.recordEmiPayment(debtId, amount);
+  Future<void> recordEmi(int debtId, double amount, int fromAccountId, String debtName) async {
+    await DatabaseHelper.instance.recordEmiPayment(debtId, amount, fromAccountId, debtName);
     ref.invalidateSelf();
+    ref.invalidate(accountsProvider);
+    ref.invalidate(transactionsProvider);
+    ref.invalidate(dashboardProvider);
+    ref.invalidate(budgetSpentProvider);
   }
 
   Future<void> edit(int id, Map<String, dynamic> values) async {

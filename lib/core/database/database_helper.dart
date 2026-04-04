@@ -428,6 +428,43 @@ class DatabaseHelper {
     await db.update('transactions', values, where: 'id = ?', whereArgs: [id]);
   }
 
+  Future<void> updateTransactionFull({
+    required int id,
+    required String type,
+    required double oldAmount,
+    required int? oldAccountId,
+    required double newAmount,
+    required int? newAccountId,
+    required String newDate,
+    required String newCategory,
+    required String newNote,
+  }) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      // Reverse old balance effect
+      if (type == 'expense' && oldAccountId != null) {
+        await txn.rawUpdate('UPDATE accounts SET balance = balance + ? WHERE id = ?', [oldAmount, oldAccountId]);
+      } else if (type == 'income' && oldAccountId != null) {
+        await txn.rawUpdate('UPDATE accounts SET balance = balance - ? WHERE id = ?', [oldAmount, oldAccountId]);
+      }
+      // Apply new balance effect
+      if (type == 'expense' && newAccountId != null) {
+        await txn.rawUpdate('UPDATE accounts SET balance = balance - ? WHERE id = ?', [newAmount, newAccountId]);
+      } else if (type == 'income' && newAccountId != null) {
+        await txn.rawUpdate('UPDATE accounts SET balance = balance + ? WHERE id = ?', [newAmount, newAccountId]);
+      }
+      // Update transaction record
+      await txn.update('transactions', {
+        'amount': newAmount,
+        if (type == 'expense') 'from_account': newAccountId,
+        if (type == 'income') 'to_account': newAccountId,
+        'date': newDate,
+        'category': newCategory,
+        'note': newNote,
+      }, where: 'id = ?', whereArgs: [id]);
+    });
+  }
+
   Future<void> softDeleteTransaction(int id) async {
     final db = await database;
     final rows = await db.query('transactions', where: 'id = ?', whereArgs: [id]);
@@ -488,6 +525,17 @@ class DatabaseHelper {
     final end = DateTime(year, month + 1, 1).toIso8601String();
     final result = await db.rawQuery(
       "SELECT SUM(amount) as total FROM transactions WHERE type='expense' AND is_deleted=0 AND date>=? AND date<?",
+      [start, end],
+    );
+    return (result.first['total'] as num?)?.toDouble() ?? 0;
+  }
+
+  Future<double> getTotalIncome({required int month, required int year}) async {
+    final db = await database;
+    final start = DateTime(year, month, 1).toIso8601String();
+    final end = DateTime(year, month + 1, 1).toIso8601String();
+    final result = await db.rawQuery(
+      "SELECT SUM(amount) as total FROM transactions WHERE type='income' AND is_deleted=0 AND date>=? AND date<?",
       [start, end],
     );
     return (result.first['total'] as num?)?.toDouble() ?? 0;
@@ -620,12 +668,28 @@ class DatabaseHelper {
     await db.update('debts', values, where: 'id=?', whereArgs: [id]);
   }
 
-  Future<void> recordEmiPayment(int debtId, double emiAmount) async {
+  Future<void> recordEmiPayment(int debtId, double emiAmount, int fromAccountId, String debtName) async {
     final db = await database;
-    await db.rawUpdate(
-      'UPDATE debts SET outstanding = MAX(0, outstanding - ?) WHERE id = ?',
-      [emiAmount, debtId],
-    );
+    await db.transaction((txn) async {
+      await txn.rawUpdate(
+        'UPDATE debts SET outstanding = MAX(0, outstanding - ?) WHERE id = ?',
+        [emiAmount, debtId],
+      );
+      await txn.rawUpdate(
+        'UPDATE accounts SET balance = balance - ? WHERE id = ?',
+        [emiAmount, fromAccountId],
+      );
+      await txn.insert('transactions', {
+        'type': 'expense',
+        'amount': emiAmount,
+        'from_account': fromAccountId,
+        'to_account': null,
+        'category': 'Debt Repayment',
+        'note': 'EMI: $debtName',
+        'date': DateTime.now().toIso8601String(),
+        'is_deleted': 0,
+      });
+    });
   }
 
   Future<void> deleteDebt(int id) async {

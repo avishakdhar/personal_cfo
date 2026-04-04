@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../core/models/account_model.dart';
 import '../../core/providers/app_providers.dart';
 import 'add_account_screen.dart';
+import 'account_detail_screen.dart';
 import '../transactions/transfer_screen.dart';
 
 class AccountsScreen extends ConsumerWidget {
@@ -84,6 +85,7 @@ class AccountsScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
                 ...accounts.map((account) => _AccountCard(
                   account: account,
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => AccountDetailScreen(account: account))),
                   onDelete: () => _deleteAccount(context, ref, account),
                   onEdit: () => _editAccount(context, ref, account),
                 )),
@@ -120,10 +122,11 @@ class AccountsScreen extends ConsumerWidget {
 
 class _AccountCard extends StatelessWidget {
   final Account account;
+  final VoidCallback onTap;
   final VoidCallback onDelete;
   final VoidCallback onEdit;
 
-  const _AccountCard({required this.account, required this.onDelete, required this.onEdit});
+  const _AccountCard({required this.account, required this.onTap, required this.onDelete, required this.onEdit});
 
   IconData get _icon {
     switch (account.type) {
@@ -143,6 +146,7 @@ class _AccountCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       child: ListTile(
+        onTap: onTap,
         leading: CircleAvatar(
           backgroundColor: Theme.of(context).colorScheme.primaryContainer,
           child: Icon(_icon, color: Theme.of(context).colorScheme.primary, size: 20),

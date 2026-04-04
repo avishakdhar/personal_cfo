@@ -87,20 +87,42 @@ class DashboardScreen extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: _StatCard(
-                      icon: Icons.today,
-                      label: "Today's Spend",
-                      value: '₹${_fmt(data.todaySpending)}',
-                      color: Colors.orange,
+                      icon: Icons.arrow_upward_rounded,
+                      label: 'Income',
+                      value: '₹${_fmt(data.monthlyIncome)}',
+                      color: Colors.green,
                     ).animate(delay: 100.ms).fade().slideY(begin: 0.1),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: _StatCard(
-                      icon: Icons.calendar_month,
-                      label: 'This Month',
+                      icon: Icons.arrow_downward_rounded,
+                      label: 'Expense',
                       value: '₹${_fmt(data.monthlySpending)}',
-                      color: cs.primary,
+                      color: Colors.red,
                     ).animate(delay: 200.ms).fade().slideY(begin: 0.1),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _StatCard(
+                      icon: Icons.today,
+                      label: "Today's Spend",
+                      value: '₹${_fmt(data.todaySpending)}',
+                      color: Colors.orange,
+                    ).animate(delay: 150.ms).fade().slideY(begin: 0.1),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _StatCard(
+                      icon: Icons.savings_outlined,
+                      label: 'Savings',
+                      value: '₹${_fmt(data.monthlyIncome - data.monthlySpending)}',
+                      color: (data.monthlyIncome - data.monthlySpending) >= 0 ? Colors.teal : Colors.deepOrange,
+                    ).animate(delay: 250.ms).fade().slideY(begin: 0.1),
                   ),
                 ],
               ),

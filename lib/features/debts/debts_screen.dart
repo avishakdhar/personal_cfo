@@ -86,34 +86,65 @@ class DebtsScreen extends ConsumerWidget {
 
   void _showEmiPayment(BuildContext context, WidgetRef ref, Debt debt) {
     final ctrl = TextEditingController(text: debt.emiAmount.toString());
+    int? selectedAccountId;
+
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Record EMI — ${debt.name}'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Outstanding: ₹${NumberFormat('#,##,##0.##', 'en_IN').format(debt.outstanding)}'),
-            const SizedBox(height: 12),
-            TextField(
-              controller: ctrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'EMI Amount', prefixText: '₹ '),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          final accountsAsync = ref.watch(accountsProvider);
+          return AlertDialog(
+            title: Text('Record EMI — ${debt.name}'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Outstanding: ₹${NumberFormat('#,##,##0.##', 'en_IN').format(debt.outstanding)}'),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: ctrl,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(labelText: 'EMI Amount', prefixText: '₹ ', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                accountsAsync.when(
+                  loading: () => const CircularProgressIndicator(),
+                  error: (e, _) => Text('Error: $e'),
+                  data: (accounts) => InputDecorator(
+                    decoration: const InputDecoration(labelText: 'Pay from account', border: OutlineInputBorder()),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<int>(
+                        value: selectedAccountId,
+                        isDense: true,
+                        hint: const Text('Select account'),
+                        items: accounts.map((a) => DropdownMenuItem<int>(value: a.id, child: Text('${a.name} (₹${_fmt(a.balance)})'))).toList(),
+                        onChanged: (v) => setDialogState(() => selectedAccountId = v),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () async {
-              final amount = double.tryParse(ctrl.text);
-              if (amount == null || amount <= 0) return;
-              await ref.read(debtsProvider.notifier).recordEmi(debt.id!, amount);
-              if (ctx.mounted) Navigator.pop(ctx);
-            },
-            child: const Text('Record Payment'),
-          ),
-        ],
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+              FilledButton(
+                onPressed: () async {
+                  final amount = double.tryParse(ctrl.text);
+                  if (amount == null || amount <= 0) return;
+                  if (selectedAccountId == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Please select an account')),
+                    );
+                    return;
+                  }
+                  await ref.read(debtsProvider.notifier).recordEmi(debt.id!, amount, selectedAccountId!, debt.name);
+                  if (ctx.mounted) Navigator.pop(ctx);
+                },
+                child: const Text('Record Payment'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
