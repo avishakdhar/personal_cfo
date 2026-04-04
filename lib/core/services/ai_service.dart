@@ -17,7 +17,7 @@ class AiService {
       case AiProviderType.gemini:
         return 'gemini-1.5-flash';
       case AiProviderType.claude:
-        return isComplex ? 'claude-3-5-sonnet-20241022' : 'claude-3-haiku-20240307';
+        return isComplex ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001';
     }
   }
 
