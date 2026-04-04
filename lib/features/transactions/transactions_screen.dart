@@ -43,7 +43,9 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
       startDate: _filterStart,
       endDate: _filterEnd,
     );
-    ref.invalidate(transactionsProvider);
+    // transactionsProvider watches transactionFilterProvider, so it rebuilds
+    // automatically. Do NOT also call ref.invalidate() here — that causes a
+    // second rebuild which can race with the first and show stale data.
   }
 
   Future<void> _showDateFilter() async {

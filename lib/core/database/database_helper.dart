@@ -18,7 +18,7 @@ class DatabaseHelper {
     final path = join(dbPath, filePath);
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -155,7 +155,7 @@ class DatabaseHelper {
     ''');
     
     // Seed default expense categories
-    for (var cat in ['Food', 'Housing', 'Transport', 'Utilities', 'Entertainment', 'Health', 'Other']) {
+    for (var cat in ['Food', 'Housing', 'Transport', 'Utilities', 'Entertainment', 'Health', 'Debt Repayment', 'Other']) {
       await db.insert('categories', {'name': cat, 'type': 'expense'});
     }
     // Seed default income categories
@@ -255,15 +255,25 @@ class DatabaseHelper {
             icon_name TEXT NOT NULL DEFAULT 'category'
           )
         ''');
-        
+
         final count = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM categories')) ?? 0;
         if (count == 0) {
-          for (var cat in ['Food', 'Housing', 'Transport', 'Utilities', 'Entertainment', 'Health', 'Other']) {
+          for (var cat in ['Food', 'Housing', 'Transport', 'Utilities', 'Entertainment', 'Health', 'Debt Repayment', 'Other']) {
             await db.insert('categories', {'name': cat, 'type': 'expense'});
           }
           for (var cat in ['Salary', 'Business', 'Investments', 'Freelance', 'Other']) {
             await db.insert('categories', {'name': cat, 'type': 'income'});
           }
+        }
+      } catch (_) {}
+    }
+
+    if (oldVersion < 4) {
+      // Add "Debt Repayment" expense category for existing users if not already present
+      try {
+        final existing = await db.query('categories', where: "name = ? AND type = ?", whereArgs: ['Debt Repayment', 'expense']);
+        if (existing.isEmpty) {
+          await db.insert('categories', {'name': 'Debt Repayment', 'type': 'expense', 'color_hex': '#B00020', 'icon_name': 'credit_card'});
         }
       } catch (_) {}
     }
