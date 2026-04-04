@@ -37,13 +37,12 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
   void _updateFilter() {
     final type =
         _tabCtrl.index == 0 ? null : _tabs[_tabCtrl.index].toLowerCase();
-    ref.read(transactionFilterProvider.notifier).state =
-        ref.read(transactionFilterProvider).copyWith(
-              type: type,
-              searchQuery: _searchCtrl.text,
-              startDate: _filterStart,
-              endDate: _filterEnd,
-            );
+    ref.read(transactionFilterProvider.notifier).state = TransactionFilter(
+      type: type,
+      searchQuery: _searchCtrl.text.isEmpty ? null : _searchCtrl.text,
+      startDate: _filterStart,
+      endDate: _filterEnd,
+    );
     ref.invalidate(transactionsProvider);
   }
 
@@ -217,16 +216,11 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
   Future<void> _delete(TransactionModel tx) async {
     await ref.read(transactionsProvider.notifier).softDelete(tx.id!);
     if (mounted) {
+      ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Transaction deleted'),
-          action: SnackBarAction(
-            label: 'Undo',
-            onPressed: () async {
-              // Restore: re-insert the transaction (simplified undo)
-              await ref.read(transactionsProvider.notifier).refresh();
-            },
-          ),
+        const SnackBar(
+          content: Text('Transaction deleted'),
+          duration: Duration(seconds: 2),
         ),
       );
     }

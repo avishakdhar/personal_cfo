@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import '../../core/database/database_helper.dart';
 import '../../core/providers/app_providers.dart';
 
 class AddExpenseScreen extends ConsumerStatefulWidget {
@@ -24,6 +26,7 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
   final _noteCtrl = TextEditingController();
   String _category = 'Food';
   int? _selectedAccountId;
+  int? _linkedDebtId;
   bool _saving = false;
   bool _aiLoading = false;
 
@@ -74,14 +77,26 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
       );
       return;
     }
+    if (_category == 'Debt Repayment' && _linkedDebtId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Select which liability to repay')),
+      );
+      return;
+    }
     setState(() => _saving = true);
     try {
+      final amount = double.parse(_amountCtrl.text);
       await ref.read(transactionsProvider.notifier).addExpense(
-            amount: double.parse(_amountCtrl.text),
+            amount: amount,
             fromAccountId: _selectedAccountId!,
             category: _category,
             note: _noteCtrl.text,
           );
+      if (_linkedDebtId != null) {
+        await DatabaseHelper.instance.reduceDebtOutstanding(_linkedDebtId!, amount);
+        ref.invalidate(debtsProvider);
+        ref.invalidate(dashboardProvider);
+      }
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
@@ -187,6 +202,36 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
                 ),
               ],
             ),
+            if (_category == 'Debt Repayment') ...[
+              const SizedBox(height: 16),
+              ref.watch(debtsProvider).when(
+                loading: () => const CircularProgressIndicator(),
+                error: (e, _) => Text('Error: $e'),
+                data: (debts) {
+                  final active = debts.where((d) => !d.isFullyPaid).toList();
+                  return InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'Repay which liability?',
+                      border: OutlineInputBorder(),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<int>(
+                        value: _linkedDebtId,
+                        isDense: true,
+                        hint: const Text('Select liability'),
+                        items: active
+                            .map((d) => DropdownMenuItem<int>(
+                                  value: d.id,
+                                  child: Text('${d.name} (₹${NumberFormat('#,##,##0.##', 'en_IN').format(d.outstanding)} left)'),
+                                ))
+                            .toList(),
+                        onChanged: (v) => setState(() => _linkedDebtId = v),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
             const SizedBox(height: 16),
             TextFormField(
               controller: _noteCtrl,

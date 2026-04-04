@@ -663,6 +663,14 @@ class DatabaseHelper {
     return db.insert('debts', row);
   }
 
+  Future<void> reduceDebtOutstanding(int debtId, double amount) async {
+    final db = await database;
+    await db.rawUpdate(
+      'UPDATE debts SET outstanding = MAX(0, outstanding - ?) WHERE id = ?',
+      [amount, debtId],
+    );
+  }
+
   Future<void> updateDebt(int id, Map<String, dynamic> values) async {
     final db = await database;
     await db.update('debts', values, where: 'id=?', whereArgs: [id]);

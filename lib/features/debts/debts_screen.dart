@@ -74,7 +74,20 @@ class DebtsScreen extends ConsumerWidget {
                 onEdit: () => Navigator.push(context,
                     MaterialPageRoute(builder: (_) => AddDebtScreen(debt: debt)))
                   .then((_) => ref.invalidate(debtsProvider)),
-                onDelete: () => ref.read(debtsProvider.notifier).delete(debt.id!),
+                onDelete: () async {
+                  final ok = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Delete debt?'),
+                      content: Text('Delete "${debt.name}"? This cannot be undone.'),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                        FilledButton(onPressed: () => Navigator.pop(ctx, true), style: FilledButton.styleFrom(backgroundColor: Colors.red), child: const Text('Delete')),
+                      ],
+                    ),
+                  );
+                  if (ok == true) ref.read(debtsProvider.notifier).delete(debt.id!);
+                },
                 onPayEmi: () => _showEmiPayment(context, ref, debt),
               )),
             ],
@@ -174,18 +187,13 @@ class _DebtCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(child: Text(debt.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
-                Text(debt.type, style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 12)),
-                PopupMenuButton<String>(
-                  onSelected: (v) {
-                    if (v == 'emi') onPayEmi();
-                    if (v == 'edit') onEdit();
-                    if (v == 'delete') onDelete();
-                  },
-                  itemBuilder: (_) => [
-                    const PopupMenuItem(value: 'emi', child: Text('Record EMI')),
-                    const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                    const PopupMenuItem(value: 'delete', child: Text('Delete')),
-                  ],
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(debt.type, style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 12)),
                 ),
               ],
             ),
@@ -222,13 +230,33 @@ class _DebtCard extends StatelessWidget {
               Text('~$remaining months remaining', style: const TextStyle(fontSize: 12, color: Colors.orange)),
             if (debt.isFullyPaid)
               const Text('Fully Paid!', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerRight,
-              child: FilledButton.tonal(
-                onPressed: onPayEmi,
-                child: const Text('Record EMI'),
-              ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.edit_outlined, size: 16),
+                    label: const Text('Edit'),
+                    onPressed: onEdit,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.delete_outline, size: 16),
+                    label: const Text('Delete'),
+                    style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                    onPressed: onDelete,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: FilledButton.tonal(
+                    onPressed: debt.isFullyPaid ? null : onPayEmi,
+                    child: const Text('Pay EMI'),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
