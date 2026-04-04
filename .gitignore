@@ -1,6 +1,8 @@
 # Miscellaneous
 *.class
 *.log
+analyze_out.txt
+flutter_analyze_ai.txt
 *.pyc
 *.swp
 .DS_Store
