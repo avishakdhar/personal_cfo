@@ -14,11 +14,12 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _pageController = PageController();
   final _apiKeyCtrl = TextEditingController();
+  final _nameCtrl = TextEditingController();
   bool _showApiKey = false;
   int _currentPage = 0;
 
-  // Info pages (4) + API key setup page (1) = 5 total
-  static const int _totalPages = 5;
+  // Profile page (1) + Info pages (4) + API key setup page (1) = 6 total
+  static const int _totalPages = 6;
 
   final _infoPages = const [
     _OnboardingPage(
@@ -42,7 +43,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     _OnboardingPage(
       icon: Icons.smart_toy,
       title: 'AI-Powered Insights',
-      body: 'Your personal CFO AI categorizes spending, detects anomalies, forecasts cash flow, and answers financial questions.',
+      body: 'FinPilot.ai categorizes spending, detects anomalies, forecasts cash flow, and answers financial questions.',
       color: Color(0xFF1565C0),
     ),
   ];
@@ -51,6 +52,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   void dispose() {
     _pageController.dispose();
     _apiKeyCtrl.dispose();
+    _nameCtrl.dispose();
     super.dispose();
   }
 
@@ -66,6 +68,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Future<void> _finish() async {
+    // Save profile name
+    final name = _nameCtrl.text.trim();
+    if (name.isNotEmpty) {
+      await ref.read(userNameProvider.notifier).setName(name);
+    }
+
     // Save API key if entered
     final key = _apiKeyCtrl.text.trim();
     if (key.isNotEmpty) {
@@ -107,6 +115,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 controller: _pageController,
                 onPageChanged: (i) => setState(() => _currentPage = i),
                 children: [
+                  _ProfileSetupPage(controller: _nameCtrl),
                   ..._infoPages,
                   _ApiKeySetupPage(
                     controller: _apiKeyCtrl,
@@ -161,6 +170,59 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 }
 
+// ─── Profile Setup Page ───────────────────────────────────────────────────────
+
+class _ProfileSetupPage extends StatelessWidget {
+  final TextEditingController controller;
+
+  const _ProfileSetupPage({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 28),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              color: cs.primary.withAlpha(26),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.person_outline, size: 50, color: cs.primary),
+          ),
+          const SizedBox(height: 28),
+          Text(
+            'Create Your Profile',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'What should we call you? FinPilot.ai is ready to assist.',
+            style: TextStyle(color: cs.onSurface.withAlpha(179), fontSize: 15, height: 1.5),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 32),
+          TextField(
+            controller: controller,
+            textCapitalization: TextCapitalization.words,
+            decoration: const InputDecoration(
+              labelText: 'Legal or Preferred Name',
+              hintText: 'e.g. John Doe',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.badge_outlined),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // ─── API Key Setup Page ───────────────────────────────────────────────────────
 
 class _ApiKeySetupPage extends StatelessWidget {
@@ -186,7 +248,7 @@ class _ApiKeySetupPage extends StatelessWidget {
             width: 100,
             height: 100,
             decoration: BoxDecoration(
-              color: const Color(0xFF1565C0).withOpacity(0.1),
+              color: const Color(0xFF1565C0).withAlpha(26),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.key_outlined, size: 50, color: Color(0xFF1565C0)),
@@ -201,7 +263,7 @@ class _ApiKeySetupPage extends StatelessWidget {
           Text(
             'Enter your Claude API key to enable AI chat, auto-categorization, receipt scanning, and spending insights.',
             style: TextStyle(
-              color: cs.onSurface.withOpacity(0.7),
+              color: cs.onSurface.withAlpha(179),
               fontSize: 15,
               height: 1.5,
             ),
@@ -226,7 +288,7 @@ class _ApiKeySetupPage extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: cs.primaryContainer.withOpacity(0.5),
+              color: cs.primaryContainer.withAlpha(128),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
@@ -275,7 +337,7 @@ class _OnboardingPage extends StatelessWidget {
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
+              color: color.withAlpha(31),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, size: 60, color: color),
@@ -290,7 +352,7 @@ class _OnboardingPage extends StatelessWidget {
           Text(
             body,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              color: Theme.of(context).colorScheme.onSurface.withAlpha(179),
             ),
             textAlign: TextAlign.center,
           ),

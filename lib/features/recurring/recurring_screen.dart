@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../core/models/recurring_transaction_model.dart';
 import '../../core/providers/app_providers.dart';
 import 'add_recurring_screen.dart';
 
@@ -53,7 +52,7 @@ class RecurringScreen extends ConsumerWidget {
                 margin: const EdgeInsets.only(bottom: 10),
                 child: ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: color.withOpacity(0.12),
+                    backgroundColor: color.withAlpha(31),
                     child: Icon(isIncome ? Icons.arrow_downward : Icons.arrow_upward, color: color, size: 18),
                   ),
                   title: Row(

@@ -52,7 +52,7 @@ class _AddAccountScreenState extends ConsumerState<AddAccountScreen> {
     if (widget.account == null) {
       await notifier.add(account);
     } else {
-      await notifier.update(account.id!, account.toMap()..remove('id'));
+      await notifier.edit(account.id!, account.toMap()..remove('id'));
     }
 
     if (mounted) Navigator.pop(context);
@@ -74,14 +74,14 @@ class _AddAccountScreenState extends ConsumerState<AddAccountScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _type,
+              initialValue: _type,
               items: Account.types.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
               onChanged: (v) => setState(() => _type = v!),
               decoration: const InputDecoration(labelText: 'Account Type', border: OutlineInputBorder()),
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _currency,
+              initialValue: _currency,
               items: Account.currencies.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
               onChanged: (v) => setState(() => _currency = v!),
               decoration: const InputDecoration(labelText: 'Currency', border: OutlineInputBorder()),

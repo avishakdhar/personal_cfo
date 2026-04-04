@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../core/providers/app_providers.dart';
-import '../../core/models/account_model.dart';
 import '../transactions/add_expense_screen.dart';
 
 class ReceiptScanScreen extends ConsumerStatefulWidget {
@@ -116,9 +115,9 @@ class _ReceiptScanScreenState extends ConsumerState<ReceiptScanScreen> {
                 margin: const EdgeInsets.only(bottom: 16),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.1),
+                  color: Colors.orange.withAlpha(26),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                  border: Border.all(color: Colors.orange.withAlpha(77)),
                 ),
                 child: const Row(
                   children: [
@@ -143,7 +142,7 @@ class _ReceiptScanScreenState extends ConsumerState<ReceiptScanScreen> {
                   color: cs.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: cs.outline.withOpacity(0.3),
+                    color: cs.outline.withAlpha(77),
                     width: 2,
                     strokeAlign: BorderSide.strokeAlignInside,
                   ),
@@ -215,7 +214,7 @@ class _ReceiptScanScreenState extends ConsumerState<ReceiptScanScreen> {
             // Error
             if (_error != null)
               Card(
-                color: Colors.red.withOpacity(0.1),
+                color: Colors.red.withAlpha(26),
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Row(

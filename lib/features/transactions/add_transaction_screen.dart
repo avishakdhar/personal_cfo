@@ -50,16 +50,13 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
     if (amountController.text.isEmpty) return;
 
-    await DatabaseHelper.instance.insertTransaction({
-
-      'amount': double.parse(amountController.text),
-      'from_account': selectedAccount,
-      'to_account': null,
-      'category': category,
-      'note': noteController.text,
-      'date': DateTime.now().toString()
-
-    });
+    if (selectedAccount == null) return;
+    await DatabaseHelper.instance.insertExpense(
+      amount: double.parse(amountController.text),
+      fromAccountId: selectedAccount!,
+      category: category,
+      note: noteController.text,
+    );
 
     if (!mounted) return;
 

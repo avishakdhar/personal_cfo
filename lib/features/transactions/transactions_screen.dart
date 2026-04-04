@@ -276,7 +276,7 @@ class _TxTile extends StatelessWidget {
       onDismissed: (_) => onDelete(),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: color.withOpacity(0.12),
+          backgroundColor: color.withAlpha(31),
           child: Icon(
             isIncome
                 ? Icons.arrow_downward

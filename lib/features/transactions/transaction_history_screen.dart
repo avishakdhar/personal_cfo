@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../core/models/transaction_model.dart';
 import '../../core/providers/app_providers.dart';
 import 'edit_transaction_screen.dart';
 
@@ -37,7 +36,7 @@ class TransactionHistoryScreen extends ConsumerWidget {
 
               return ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: color.withOpacity(0.12),
+                  backgroundColor: color.withAlpha(31),
                   child: Icon(icon, color: color, size: 18),
                 ),
                 title: Text(tx.category, style: const TextStyle(fontWeight: FontWeight.w600)),

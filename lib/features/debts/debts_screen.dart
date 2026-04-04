@@ -58,7 +58,7 @@ class DebtsScreen extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
             children: [
               Card(
-                color: Colors.red.withOpacity(0.1),
+                color: Colors.red.withAlpha(26),
                 child: ListTile(
                   leading: const Icon(Icons.account_balance, color: Colors.red),
                   title: const Text('Total Outstanding'),
@@ -166,7 +166,7 @@ class _DebtCard extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: debt.progressPercent,
                 minHeight: 8,
-                backgroundColor: Colors.grey.withOpacity(0.2),
+                backgroundColor: Colors.grey.withAlpha(51),
                 valueColor: const AlwaysStoppedAnimation<Color>(Colors.red),
               ),
             ),

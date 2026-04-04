@@ -64,7 +64,7 @@ class _AddInvestmentScreenState extends ConsumerState<AddInvestmentScreen> {
     if (widget.investment == null) {
       await ref.read(investmentsProvider.notifier).add(inv);
     } else {
-      await ref.read(investmentsProvider.notifier).update(inv.id!, inv.toMap()..remove('id'));
+      await ref.read(investmentsProvider.notifier).edit(inv.id!, inv.toMap()..remove('id'));
     }
     if (mounted) Navigator.pop(context);
   }
@@ -81,7 +81,7 @@ class _AddInvestmentScreenState extends ConsumerState<AddInvestmentScreen> {
             TextFormField(controller: _nameCtrl, decoration: const InputDecoration(labelText: 'Name', border: OutlineInputBorder()), validator: (v) => v == null || v.isEmpty ? 'Required' : null),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _type,
+              initialValue: _type,
               items: Investment.types.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
               onChanged: (v) => setState(() => _type = v!),
               decoration: const InputDecoration(labelText: 'Type', border: OutlineInputBorder()),

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:csv/csv.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
@@ -46,7 +47,7 @@ class ExportService {
 
     await Share.shareXFiles(
       [XFile(filePath, mimeType: 'text/csv')],
-      subject: 'Personal CFO — Transactions Export',
+      subject: 'FinPilot.ai — Transactions Export',
     );
   }
 
@@ -74,7 +75,7 @@ class ExportService {
 
     await Share.shareXFiles(
       [XFile(filePath, mimeType: 'application/json')],
-      subject: 'Personal CFO — Full Backup',
+      subject: 'FinPilot.ai — Full Backup',
     );
   }
 
@@ -97,7 +98,9 @@ class ExportService {
       try {
         await db.insertAccount(Map<String, dynamic>.from(a)..remove('id'));
         restored++;
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('Restore: failed to insert account: $e');
+      }
     }
 
     // Note: transactions and other tables would need more careful handling
@@ -120,7 +123,7 @@ class ExportService {
 
     final monthName = DateFormat('MMMM yyyy').format(DateTime(year, month));
     final sb = StringBuffer();
-    sb.writeln('Personal CFO — Monthly Report');
+    sb.writeln('FinPilot.ai — Monthly Report');
     sb.writeln('Period: $monthName');
     sb.writeln('Generated: ${_dateFormat.format(DateTime.now())}');
     sb.writeln('');
@@ -144,7 +147,7 @@ class ExportService {
     final filePath = await _writeTempFile('report_$monthName.txt', report);
     await Share.shareXFiles(
       [XFile(filePath, mimeType: 'text/plain')],
-      subject: 'Personal CFO — Monthly Report',
+      subject: 'FinPilot.ai — Monthly Report',
     );
   }
 

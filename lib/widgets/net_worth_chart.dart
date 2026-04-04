@@ -32,7 +32,7 @@ class NetWorthChart extends StatelessWidget {
             drawVerticalLine: false,
             horizontalInterval: (maxY - minY + padding * 2) / 4,
             getDrawingHorizontalLine: (v) => FlLine(
-              color: cs.outlineVariant.withOpacity(0.3),
+              color: cs.outlineVariant.withAlpha(77),
               strokeWidth: 1,
             ),
           ),
@@ -87,7 +87,7 @@ class NetWorthChart extends StatelessWidget {
               barWidth: 2.5,
               dotData: FlDotData(
                 show: snapshots.length <= 6,
-                getDotPainter: (_, __, ___, ____) => FlDotCirclePainter(
+                getDotPainter: (_, _, _, _) => FlDotCirclePainter(
                   radius: 4,
                   color: cs.primary,
                   strokeWidth: 2,
@@ -100,8 +100,8 @@ class NetWorthChart extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    cs.primary.withOpacity(0.25),
-                    cs.primary.withOpacity(0.0),
+                    cs.primary.withAlpha(64),
+                    cs.primary.withAlpha(0),
                   ],
                 ),
               ),

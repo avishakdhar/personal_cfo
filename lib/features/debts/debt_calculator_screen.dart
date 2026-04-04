@@ -169,7 +169,7 @@ class _EmiCalculatorTabState extends State<_EmiCalculatorTab> {
                 child: Column(
                   children: [
                     Text('Monthly EMI',
-                        style: TextStyle(fontSize: 14, color: cs.onPrimaryContainer.withOpacity(0.7))),
+                        style: TextStyle(fontSize: 14, color: cs.onPrimaryContainer.withAlpha(179))),
                     const SizedBox(height: 4),
                     Text(
                       '₹${fmt.format(_emi!)}',
@@ -508,7 +508,7 @@ class _StrategyCard extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 18,
-                  backgroundColor: color.withOpacity(0.12),
+                  backgroundColor: color.withAlpha(31),
                   child: Icon(icon, color: color, size: 18),
                 ),
                 const SizedBox(width: 10),
@@ -533,7 +533,7 @@ class _StrategyCard extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 12,
-                      backgroundColor: color.withOpacity(0.12),
+                      backgroundColor: color.withAlpha(31),
                       child: Text('${i + 1}',
                           style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.bold)),
                     ),

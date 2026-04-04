@@ -49,7 +49,7 @@ class _AddBudgetScreenState extends ConsumerState<AddBudgetScreen> {
     if (widget.budget == null) {
       await ref.read(budgetsProvider.notifier).add(budget);
     } else {
-      await ref.read(budgetsProvider.notifier).update(budget.id!, budget.toMap()..remove('id'));
+      await ref.read(budgetsProvider.notifier).edit(budget.id!, budget.toMap()..remove('id'));
     }
     if (mounted) Navigator.pop(context);
   }
@@ -64,7 +64,7 @@ class _AddBudgetScreenState extends ConsumerState<AddBudgetScreen> {
           padding: const EdgeInsets.all(20),
           children: [
             DropdownButtonFormField<String>(
-              value: _category,
+              initialValue: _category,
               items: TransactionModel.expenseCategories
                   .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                   .toList(),
@@ -84,7 +84,7 @@ class _AddBudgetScreenState extends ConsumerState<AddBudgetScreen> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _period,
+              initialValue: _period,
               items: ['monthly', 'weekly'].map((p) => DropdownMenuItem(value: p, child: Text(p.toUpperCase()))).toList(),
               onChanged: (v) => setState(() => _period = v!),
               decoration: const InputDecoration(labelText: 'Period', border: OutlineInputBorder()),

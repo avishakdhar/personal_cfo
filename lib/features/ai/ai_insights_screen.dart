@@ -546,7 +546,7 @@ class _AnomalyTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: Colors.orange.withOpacity(0.08),
+      color: Colors.orange.withAlpha(20),
       child: ListTile(
         leading: const Icon(Icons.warning_amber, color: Colors.orange),
         title: Text(text),

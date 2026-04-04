@@ -197,7 +197,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                       ),
                       const SizedBox(height: 8),
                       Card(
-                        color: savings >= 0 ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                        color: savings >= 0 ? Colors.green.withAlpha(26) : Colors.red.withAlpha(26),
                         child: ListTile(
                           leading: Icon(
                             savings >= 0 ? Icons.savings_outlined : Icons.trending_down,
@@ -312,7 +312,7 @@ class _SummaryCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 18,
-                backgroundColor: color.withOpacity(0.12),
+                backgroundColor: color.withAlpha(31),
                 child: Icon(icon, color: color, size: 18),
               ),
               const SizedBox(width: 10),
@@ -383,7 +383,7 @@ class _CategoryBreakdown extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: pct,
                       minHeight: 6,
-                      backgroundColor: _colors[idx].withOpacity(0.12),
+                      backgroundColor: _colors[idx].withAlpha(31),
                       valueColor: AlwaysStoppedAnimation(_colors[idx]),
                     ),
                   ),
@@ -419,7 +419,7 @@ class _MonthlyTrendChart extends StatelessWidget {
             drawVerticalLine: false,
             horizontalInterval: maxVal / 4,
             getDrawingHorizontalLine: (v) => FlLine(
-              color: cs.outlineVariant.withOpacity(0.3),
+              color: cs.outlineVariant.withAlpha(77),
               strokeWidth: 1,
             ),
           ),
@@ -446,7 +446,7 @@ class _MonthlyTrendChart extends StatelessWidget {
           barTouchData: BarTouchData(
             touchTooltipData: BarTouchTooltipData(
               getTooltipColor: (_) => cs.surfaceContainerHigh,
-              getTooltipItem: (group, _, rod, __) {
+              getTooltipItem: (group, _, rod, _) {
                 final h = history[group.x];
                 return BarTooltipItem(
                   '${DateFormat('MMM yy').format(DateTime(h['year'], h['month']))}\n₹${NumberFormat('#,##,##0', 'en_IN').format(rod.toY)}',

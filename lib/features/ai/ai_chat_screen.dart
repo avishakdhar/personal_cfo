@@ -36,7 +36,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
     _messages.add(_Message(
       role: 'assistant',
       content:
-          "Hi! I'm your Personal CFO AI. Ask me about your finances, or say something like \"spent ₹500 on dinner\" to add a transaction quickly.",
+          "Hi! I'm FinPilot.ai. Ask me about your finances, or say something like \"spent ₹500 on dinner\" to add a transaction quickly.",
     ));
     _initSpeech();
   }
@@ -102,14 +102,12 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
         .map((e) => '${e.key}: ₹${e.value.toStringAsFixed(0)}')
         .join(', ');
 
-    return '''
-Accounts: $accList
-This month\'s spending: ₹${monthlySpend.toStringAsFixed(0)}
-Category breakdown: $catList
-Total assets: ₹${assets.toStringAsFixed(0)}
-Total liabilities: ₹${liabilities.toStringAsFixed(0)}
-Net worth: ₹${(assets - liabilities).toStringAsFixed(0)}
-''';
+    return "Accounts: $accList\n"
+        "This month's spending: ₹${monthlySpend.toStringAsFixed(0)}\n"
+        "Category breakdown: $catList\n"
+        "Total assets: ₹${assets.toStringAsFixed(0)}\n"
+        "Total liabilities: ₹${liabilities.toStringAsFixed(0)}\n"
+        "Net worth: ₹${(assets - liabilities).toStringAsFixed(0)}\n";
   }
 
   Future<void> _sendMessage() async {
@@ -287,7 +285,7 @@ Net worth: ₹${(assets - liabilities).toStringAsFixed(0)}
                     constraints: BoxConstraints(
                         maxWidth: MediaQuery.of(context).size.width * 0.75),
                     decoration: BoxDecoration(
-                      color: isUser ? cs.primary : cs.surfaceVariant,
+                      color: isUser ? cs.primary : cs.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(16).copyWith(
                         bottomRight:
                             isUser ? const Radius.circular(4) : null,
@@ -311,7 +309,7 @@ Net worth: ₹${(assets - liabilities).toStringAsFixed(0)}
                           style: TextStyle(
                             fontSize: 10,
                             color: (isUser ? cs.onPrimary : cs.onSurfaceVariant)
-                                .withOpacity(0.6),
+                                .withAlpha(153),
                           ),
                         ),
                       ],
@@ -327,7 +325,7 @@ Net worth: ₹${(assets - liabilities).toStringAsFixed(0)}
               color: cs.surface,
               boxShadow: [
                 BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withAlpha(13),
                     blurRadius: 8,
                     offset: const Offset(0, -2))
               ],

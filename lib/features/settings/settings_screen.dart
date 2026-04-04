@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../core/providers/app_providers.dart';
 import '../../core/services/export_service.dart';
-import '../../core/services/google_drive_service.dart';
 import '../../core/services/notification_service.dart';
+import 'categories_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -168,106 +168,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Future<void> _googleDriveBackup() async {
-    final drive = GoogleDriveService.instance;
-
-    if (!drive.isSignedIn) {
-      final success = await drive.signIn();
-      if (!success) {
-        if (mounted) _showError('Google Sign-In failed. Make sure google-services.json is configured.');
-        return;
-      }
-    }
-
-    setState(() => _loading = true);
-    try {
-      final fileName = await drive.uploadBackup();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Backup uploaded: $fileName'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) _showError('Drive backup failed: $e');
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
-  Future<void> _googleDriveRestore() async {
-    final drive = GoogleDriveService.instance;
-
-    if (!drive.isSignedIn) {
-      final success = await drive.signIn();
-      if (!success) {
-        if (mounted) _showError('Google Sign-In failed.');
-        return;
-      }
-    }
-
-    setState(() => _loading = true);
-    try {
-      final backups = await drive.listBackups();
-      setState(() => _loading = false);
-
-      if (backups.isEmpty) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('No backups found in Google Drive')),
-          );
-        }
-        return;
-      }
-
-      if (!mounted) return;
-      final selected = await showDialog<Map<String, String>>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Restore from Drive'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: backups.length,
-              itemBuilder: (_, i) {
-                final b = backups[i];
-                return ListTile(
-                  leading: const Icon(Icons.backup_outlined),
-                  title: Text(b['name']!),
-                  subtitle: Text(b['date']!.substring(0, 10)),
-                  onTap: () => Navigator.pop(ctx, b),
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-          ],
-        ),
-      );
-
-      if (selected == null) return;
-
-      setState(() => _loading = true);
-      final result = await drive.downloadAndRestore(selected['id']!);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(result), backgroundColor: Colors.green),
-        );
-      }
-    } catch (e) {
-      if (mounted) _showError('Drive restore failed: $e');
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
   Future<void> _testBudgetNotification() async {
     await NotificationService.instance.showBudgetAlert(
       category: 'Food',
@@ -291,7 +191,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final isDark = ref.watch(darkModeProvider);
     final pinEnabled = ref.watch(pinEnabledProvider);
     final apiKey = ref.watch(apiKeyProvider);
+    final aiProvider = ref.watch(aiProviderTypeProvider);
     final cs = Theme.of(context).colorScheme;
+
+    String hint = 'sk-ant-...';
+    String label = 'Claude API Key';
+    String helper = 'Get your key at console.anthropic.com';
+    String providerName = 'Claude';
+
+    if (aiProvider == AiProviderType.openai) {
+      hint = 'sk-proj-...';
+      label = 'OpenAI API Key';
+      helper = 'Get your key at platform.openai.com';
+      providerName = 'OpenAI';
+    } else if (aiProvider == AiProviderType.gemini) {
+      hint = 'AIzaSy...';
+      label = 'Gemini API Key';
+      helper = 'Get your key at aistudio.google.com';
+      providerName = 'Gemini';
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
@@ -317,7 +235,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            apiKey.isNotEmpty ? 'Claude API key configured' : 'API key not set — AI features disabled',
+                            apiKey.isNotEmpty ? '$providerName API key configured' : 'API key not set — AI features disabled',
                             style: TextStyle(
                               color: apiKey.isNotEmpty ? Colors.green : Colors.orange,
                               fontSize: 13,
@@ -325,14 +243,30 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<AiProviderType>(
+                        initialValue: aiProvider,
+                        items: const [
+                          DropdownMenuItem(value: AiProviderType.claude, child: Text('Anthropic (Claude)')),
+                          DropdownMenuItem(value: AiProviderType.openai, child: Text('OpenAI (GPT-4o)')),
+                          DropdownMenuItem(value: AiProviderType.gemini, child: Text('Google Gemini')),
+                        ],
+                        onChanged: (v) {
+                          if (v != null) ref.read(aiProviderTypeProvider.notifier).setType(v);
+                        },
+                        decoration: const InputDecoration(
+                          labelText: 'AI Model Provider',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
                       TextField(
                         controller: _apiKeyCtrl,
                         obscureText: !_showApiKey,
                         decoration: InputDecoration(
-                          labelText: 'Claude API Key',
-                          hintText: 'sk-ant-...',
-                          helperText: 'Get your key at console.anthropic.com',
+                          labelText: label,
+                          hintText: hint,
+                          helperText: helper,
                           border: const OutlineInputBorder(),
                           suffixIcon: IconButton(
                             icon: Icon(_showApiKey ? Icons.visibility_off : Icons.visibility),
@@ -366,9 +300,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: Colors.blue.withOpacity(0.08),
+                            color: Colors.blue.withAlpha(20),
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                            border: Border.all(color: Colors.blue.withAlpha(77)),
                           ),
                           child: const Text(
                             'Without an API key, you can still track transactions, accounts, budgets, goals, investments, and debts manually. AI features (chat, insights, auto-categorization) will be unavailable.',
@@ -383,8 +317,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
               const SizedBox(height: 16),
 
-              // ─── Appearance ──────────────────────────────────────────────
-              _SectionHeader('Appearance'),
+              // ─── Preferences ──────────────────────────────────────────────
+              _SectionHeader('Preferences'),
               Card(
                 child: Column(
                   children: [
@@ -393,6 +327,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       title: const Text('Dark Mode'),
                       value: isDark,
                       onChanged: (v) => ref.read(darkModeProvider.notifier).set(v),
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(Icons.category_outlined),
+                      title: const Text('Manage Categories'),
+                      subtitle: const Text('Add or edit income and expense tags'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CategoriesScreen())),
                     ),
                   ],
                 ),
@@ -470,36 +412,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
               const SizedBox(height: 16),
 
-              // ─── Google Drive ────────────────────────────────────────────
-              _SectionHeader('Google Drive Backup'),
-              Card(
-                child: Column(
-                  children: [
-                    ListTile(
-                      leading: const Icon(Icons.cloud_upload_outlined),
-                      title: const Text('Backup to Google Drive'),
-                      subtitle: Text(
-                        GoogleDriveService.instance.isSignedIn
-                            ? 'Signed in as ${GoogleDriveService.instance.userEmail}'
-                            : 'Sign in with Google to enable',
-                      ),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: _loading ? null : _googleDriveBackup,
-                    ),
-                    const Divider(height: 1),
-                    ListTile(
-                      leading: const Icon(Icons.cloud_download_outlined),
-                      title: const Text('Restore from Google Drive'),
-                      subtitle: const Text('Choose from previous cloud backups'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: _loading ? null : _googleDriveRestore,
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
               // ─── About ───────────────────────────────────────────────────
               _SectionHeader('About'),
               Card(
@@ -510,7 +422,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         backgroundColor: cs.primaryContainer,
                         child: Icon(Icons.account_balance_wallet, color: cs.primary, size: 20),
                       ),
-                      title: const Text('Personal CFO'),
+                      title: const Text('FinPilot.ai'),
                       subtitle: const Text('v2.0.0 · AI-powered personal finance'),
                     ),
                     const Divider(height: 1),

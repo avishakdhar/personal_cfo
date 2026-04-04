@@ -7,7 +7,7 @@ import 'core/services/notification_service.dart';
 import 'features/auth/pin_screen.dart';
 import 'features/onboarding/onboarding_screen.dart';
 import 'navigation_screen.dart';
-
+import 'package:google_fonts/google_fonts.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -55,8 +55,10 @@ class PersonalCFOApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = ref.watch(darkModeProvider);
+    final textTheme = GoogleFonts.outfitTextTheme();
+    
     return MaterialApp(
-      title: 'Personal CFO',
+      title: 'FinPilot.ai',
       debugShowCheckedModeBanner: false,
       themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
       theme: ThemeData(
@@ -64,6 +66,7 @@ class PersonalCFOApp extends ConsumerWidget {
           seedColor: const Color(0xFF6750A4),
           brightness: Brightness.light,
         ),
+        textTheme: textTheme,
         useMaterial3: true,
         appBarTheme: const AppBarTheme(centerTitle: false, elevation: 0),
       ),
@@ -72,6 +75,7 @@ class PersonalCFOApp extends ConsumerWidget {
           seedColor: const Color(0xFF6750A4),
           brightness: Brightness.dark,
         ),
+        textTheme: textTheme.apply(bodyColor: Colors.white, displayColor: Colors.white),
         useMaterial3: true,
         appBarTheme: const AppBarTheme(centerTitle: false, elevation: 0),
       ),

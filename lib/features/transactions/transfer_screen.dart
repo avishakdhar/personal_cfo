@@ -74,7 +74,7 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
             padding: const EdgeInsets.all(20),
             children: [
               DropdownButtonFormField<int>(
-                value: _fromAccountId,
+                initialValue: _fromAccountId,
                 items: accounts
                     .map((a) =>
                         DropdownMenuItem(value: a.id, child: Text(a.name)))
@@ -88,7 +88,7 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<int>(
-                value: _toAccountId,
+                initialValue: _toAccountId,
                 items: accounts
                     .map((a) =>
                         DropdownMenuItem(value: a.id, child: Text(a.name)))

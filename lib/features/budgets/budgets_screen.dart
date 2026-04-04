@@ -8,8 +8,6 @@ import 'add_budget_screen.dart';
 class BudgetsScreen extends ConsumerWidget {
   const BudgetsScreen({super.key});
 
-  String _fmt(double v) => NumberFormat('#,##,##0.##', 'en_IN').format(v);
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final budgetsAsync = ref.watch(budgetsProvider);
@@ -129,7 +127,7 @@ class _BudgetCard extends ConsumerWidget {
                     child: LinearProgressIndicator(
                       value: progress,
                       minHeight: 8,
-                      backgroundColor: Colors.grey.withOpacity(0.2),
+                      backgroundColor: Colors.grey.withAlpha(51),
                       valueColor: AlwaysStoppedAnimation<Color>(progressColor),
                     ),
                   ),

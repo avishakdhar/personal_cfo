@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../database/database_helper.dart';
 import '../models/account_model.dart';
@@ -9,6 +10,7 @@ import '../models/investment_model.dart';
 import '../models/debt_model.dart';
 import '../models/recurring_transaction_model.dart';
 import '../models/net_worth_snapshot_model.dart';
+import '../models/category_model.dart';
 import '../services/ai_service.dart';
 
 // ─── SETTINGS ────────────────────────────────────────────────────────────────
@@ -37,24 +39,70 @@ class DarkModeNotifier extends StateNotifier<bool> {
   }
 }
 
-final apiKeyProvider = StateNotifierProvider<ApiKeyNotifier, String>((ref) {
+final userNameProvider = StateNotifierProvider<UserNameNotifier, String>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider);
-  return ApiKeyNotifier(prefs);
+  return UserNameNotifier(prefs);
+});
+
+class UserNameNotifier extends StateNotifier<String> {
+  final SharedPreferences _prefs;
+  UserNameNotifier(this._prefs) : super(_prefs.getString('user_name') ?? 'User');
+
+  Future<void> setName(String name) async {
+    state = name;
+    await _prefs.setString('user_name', name);
+  }
+}
+
+final apiKeyProvider = StateNotifierProvider<ApiKeyNotifier, String>((ref) {
+  return ApiKeyNotifier();
 });
 
 class ApiKeyNotifier extends StateNotifier<String> {
-  final SharedPreferences _prefs;
-  ApiKeyNotifier(this._prefs) : super(_prefs.getString('claude_api_key') ?? '');
+  static const _storage = FlutterSecureStorage();
+  static const _storageKey = 'api_key';
+
+  ApiKeyNotifier() : super('') {
+    _loadKey();
+  }
+
+  Future<void> _loadKey() async {
+    final key = await _storage.read(key: _storageKey);
+    if (mounted) state = key ?? '';
+  }
 
   Future<void> setKey(String key) async {
     state = key;
-    await _prefs.setString('claude_api_key', key);
+    await _storage.write(key: _storageKey, value: key);
+  }
+}
+
+enum AiProviderType { claude, openai, gemini }
+
+final aiProviderTypeProvider = StateNotifierProvider<AiProviderTypeNotifier, AiProviderType>((ref) {
+  final prefs = ref.watch(sharedPreferencesProvider);
+  return AiProviderTypeNotifier(prefs);
+});
+
+class AiProviderTypeNotifier extends StateNotifier<AiProviderType> {
+  final SharedPreferences _prefs;
+  AiProviderTypeNotifier(this._prefs) : super(_parse(_prefs.getString('ai_provider_type')));
+
+  static AiProviderType _parse(String? val) {
+    if (val == null) return AiProviderType.claude;
+    return AiProviderType.values.firstWhere((e) => e.name == val, orElse: () => AiProviderType.claude);
+  }
+
+  Future<void> setType(AiProviderType type) async {
+    state = type;
+    await _prefs.setString('ai_provider_type', type.name);
   }
 }
 
 final aiServiceProvider = Provider<AiService>((ref) {
   final key = ref.watch(apiKeyProvider);
-  return AiService(key);
+  final providerType = ref.watch(aiProviderTypeProvider);
+  return AiService(key, providerType);
 });
 
 // PIN auth
@@ -109,7 +157,7 @@ class AccountsNotifier extends AsyncNotifier<List<Account>> {
     ref.invalidateSelf();
   }
 
-  Future<void> update(int id, Map<String, dynamic> values) async {
+  Future<void> edit(int id, Map<String, dynamic> values) async {
     await DatabaseHelper.instance.updateAccount(id, values);
     ref.invalidateSelf();
   }
@@ -126,7 +174,7 @@ class AccountsNotifier extends AsyncNotifier<List<Account>> {
 
 final totalBalanceProvider = FutureProvider<double>((ref) async {
   final accounts = await ref.watch(accountsProvider.future);
-  return accounts.fold(0.0, (sum, a) => sum + a.balance);
+  return accounts.fold<double>(0.0, (sum, a) => sum + a.balance);
 });
 
 // ─── TRANSACTIONS ─────────────────────────────────────────────────────────────
@@ -316,7 +364,7 @@ class BudgetsNotifier extends AsyncNotifier<List<Budget>> {
     ref.invalidateSelf();
   }
 
-  Future<void> update(int id, Map<String, dynamic> values) async {
+  Future<void> edit(int id, Map<String, dynamic> values) async {
     await DatabaseHelper.instance.updateBudget(id, values);
     ref.invalidateSelf();
   }
@@ -357,7 +405,7 @@ class GoalsNotifier extends AsyncNotifier<List<Goal>> {
     ref.invalidateSelf();
   }
 
-  Future<void> update(int id, Map<String, dynamic> values) async {
+  Future<void> edit(int id, Map<String, dynamic> values) async {
     await DatabaseHelper.instance.updateGoal(id, values);
     ref.invalidateSelf();
   }
@@ -388,7 +436,7 @@ class InvestmentsNotifier extends AsyncNotifier<List<Investment>> {
     ref.invalidateSelf();
   }
 
-  Future<void> update(int id, Map<String, dynamic> values) async {
+  Future<void> edit(int id, Map<String, dynamic> values) async {
     await DatabaseHelper.instance.updateInvestment(id, values);
     ref.invalidateSelf();
   }
@@ -401,12 +449,12 @@ class InvestmentsNotifier extends AsyncNotifier<List<Investment>> {
 
 final portfolioValueProvider = FutureProvider<double>((ref) async {
   final investments = await ref.watch(investmentsProvider.future);
-  return investments.fold(0.0, (sum, i) => sum + i.currentValue);
+  return investments.fold<double>(0.0, (sum, i) => sum + i.currentValue);
 });
 
 final portfolioPnLProvider = FutureProvider<double>((ref) async {
   final investments = await ref.watch(investmentsProvider.future);
-  return investments.fold(0.0, (sum, i) => sum + i.profitLoss);
+  return investments.fold<double>(0.0, (sum, i) => sum + i.profitLoss);
 });
 
 // ─── DEBTS ───────────────────────────────────────────────────────────────────
@@ -434,7 +482,7 @@ class DebtsNotifier extends AsyncNotifier<List<Debt>> {
     ref.invalidateSelf();
   }
 
-  Future<void> update(int id, Map<String, dynamic> values) async {
+  Future<void> edit(int id, Map<String, dynamic> values) async {
     await DatabaseHelper.instance.updateDebt(id, values);
     ref.invalidateSelf();
   }
@@ -447,7 +495,7 @@ class DebtsNotifier extends AsyncNotifier<List<Debt>> {
 
 final totalOutstandingProvider = FutureProvider<double>((ref) async {
   final debts = await ref.watch(debtsProvider.future);
-  return debts.fold(0.0, (sum, d) => sum + d.outstanding);
+  return debts.fold<double>(0.0, (sum, d) => sum + d.outstanding);
 });
 
 // ─── RECURRING ───────────────────────────────────────────────────────────────
@@ -470,7 +518,7 @@ class RecurringNotifier extends AsyncNotifier<List<RecurringTransaction>> {
     ref.invalidateSelf();
   }
 
-  Future<void> update(int id, Map<String, dynamic> values) async {
+  Future<void> edit(int id, Map<String, dynamic> values) async {
     await DatabaseHelper.instance.updateRecurring(id, values);
     ref.invalidateSelf();
   }
@@ -487,3 +535,34 @@ final netWorthSnapshotsProvider = FutureProvider<List<NetWorthSnapshot>>((ref) a
   final maps = await DatabaseHelper.instance.getNetWorthSnapshots();
   return maps.map(NetWorthSnapshot.fromMap).toList();
 });
+
+// ─── CATEGORIES ───────────────────────────────────────────────────────────────
+
+final categoriesProvider = AsyncNotifierProvider<CategoriesNotifier, List<CategoryModel>>(
+  CategoriesNotifier.new,
+);
+
+class CategoriesNotifier extends AsyncNotifier<List<CategoryModel>> {
+  @override
+  Future<List<CategoryModel>> build() => _load();
+
+  Future<List<CategoryModel>> _load() async {
+    final maps = await DatabaseHelper.instance.getCategories();
+    return maps.map(CategoryModel.fromMap).toList();
+  }
+
+  Future<void> add(CategoryModel category) async {
+    await DatabaseHelper.instance.insertCategory(category.toMap()..remove('id'));
+    ref.invalidateSelf();
+  }
+
+  Future<void> edit(int id, Map<String, dynamic> values) async {
+    await DatabaseHelper.instance.updateCategory(id, values);
+    ref.invalidateSelf();
+  }
+
+  Future<void> delete(int id) async {
+    await DatabaseHelper.instance.deleteCategory(id);
+    ref.invalidateSelf();
+  }
+}

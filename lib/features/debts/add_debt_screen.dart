@@ -74,7 +74,7 @@ class _AddDebtScreenState extends ConsumerState<AddDebtScreen> {
     if (widget.debt == null) {
       await ref.read(debtsProvider.notifier).add(debt);
     } else {
-      await ref.read(debtsProvider.notifier).update(debt.id!, debt.toMap()..remove('id'));
+      await ref.read(debtsProvider.notifier).edit(debt.id!, debt.toMap()..remove('id'));
     }
     if (mounted) Navigator.pop(context);
   }
@@ -91,7 +91,7 @@ class _AddDebtScreenState extends ConsumerState<AddDebtScreen> {
             TextFormField(controller: _nameCtrl, decoration: const InputDecoration(labelText: 'Debt Name', border: OutlineInputBorder()), validator: (v) => v == null || v.isEmpty ? 'Required' : null),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _type,
+              initialValue: _type,
               items: Debt.types.map((t) => DropdownMenuItem(value: t, child: Text(t))).toList(),
               onChanged: (v) => setState(() => _type = v!),
               decoration: const InputDecoration(labelText: 'Type', border: OutlineInputBorder()),

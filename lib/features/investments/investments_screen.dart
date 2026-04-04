@@ -14,7 +14,6 @@ class InvestmentsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final invAsync = ref.watch(investmentsProvider);
-    final pnlAsync = ref.watch(portfolioPnLProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Investments')),
@@ -103,7 +102,7 @@ class InvestmentsScreen extends ConsumerWidget {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      Divider(color: Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.2)),
+                      Divider(color: Theme.of(context).colorScheme.onPrimaryContainer.withAlpha(51)),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [

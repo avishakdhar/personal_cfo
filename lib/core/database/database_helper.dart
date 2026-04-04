@@ -18,7 +18,7 @@ class DatabaseHelper {
     final path = join(dbPath, filePath);
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -142,6 +142,26 @@ class DatabaseHelper {
         value TEXT NOT NULL
       )
     ''');
+
+    // Create default categories
+    await db.execute('''
+      CREATE TABLE categories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        type TEXT NOT NULL,
+        color_hex TEXT NOT NULL DEFAULT '#6750A4',
+        icon_name TEXT NOT NULL DEFAULT 'category'
+      )
+    ''');
+    
+    // Seed default expense categories
+    for (var cat in ['Food', 'Housing', 'Transport', 'Utilities', 'Entertainment', 'Health', 'Other']) {
+      await db.insert('categories', {'name': cat, 'type': 'expense'});
+    }
+    // Seed default income categories
+    for (var cat in ['Salary', 'Business', 'Investments', 'Freelance', 'Other']) {
+      await db.insert('categories', {'name': cat, 'type': 'income'});
+    }
   }
 
   Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
@@ -223,6 +243,29 @@ class DatabaseHelper {
       for (final sql in newTables) {
         try { await db.execute(sql); } catch (_) {}
       }
+    }
+    
+    if (oldVersion < 3) {
+      try {
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS categories (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL, type TEXT NOT NULL,
+            color_hex TEXT NOT NULL DEFAULT '#6750A4',
+            icon_name TEXT NOT NULL DEFAULT 'category'
+          )
+        ''');
+        
+        final count = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM categories')) ?? 0;
+        if (count == 0) {
+          for (var cat in ['Food', 'Housing', 'Transport', 'Utilities', 'Entertainment', 'Health', 'Other']) {
+            await db.insert('categories', {'name': cat, 'type': 'expense'});
+          }
+          for (var cat in ['Salary', 'Business', 'Investments', 'Freelance', 'Other']) {
+            await db.insert('categories', {'name': cat, 'type': 'income'});
+          }
+        }
+      } catch (_) {}
     }
   }
 
@@ -768,4 +811,27 @@ class DatabaseHelper {
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
+
+  // ─── CATEGORIES ───────────────────────────────────────────────────────────────
+
+  Future<List<Map<String, dynamic>>> getCategories() async {
+    final db = await database;
+    return db.query('categories', orderBy: 'name ASC');
+  }
+
+  Future<int> insertCategory(Map<String, dynamic> category) async {
+    final db = await database;
+    return db.insert('categories', category);
+  }
+
+  Future<void> updateCategory(int id, Map<String, dynamic> values) async {
+    final db = await database;
+    await db.update('categories', values, where: 'id=?', whereArgs: [id]);
+  }
+
+  Future<void> deleteCategory(int id) async {
+    final db = await database;
+    await db.delete('categories', where: 'id=?', whereArgs: [id]);
+  }
+
 }

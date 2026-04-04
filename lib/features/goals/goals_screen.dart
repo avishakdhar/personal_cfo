@@ -8,8 +8,6 @@ import 'add_goal_screen.dart';
 class GoalsScreen extends ConsumerWidget {
   const GoalsScreen({super.key});
 
-  String _fmt(double v) => NumberFormat('#,##,##0.##', 'en_IN').format(v);
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final goalsAsync = ref.watch(goalsProvider);
@@ -113,7 +111,7 @@ class _GoalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final progressColor = goal.isCompleted ? Colors.green : Theme.of(context).colorScheme.primary;
-    final daysLeft = goal.targetDate != null ? goal.targetDate!.difference(DateTime.now()).inDays : null;
+    final daysLeft = goal.targetDate?.difference(DateTime.now()).inDays;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -125,7 +123,7 @@ class _GoalCard extends StatelessWidget {
             Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: progressColor.withOpacity(0.15),
+                  backgroundColor: progressColor.withAlpha(38),
                   child: Icon(_icon, color: progressColor),
                 ),
                 const SizedBox(width: 12),
@@ -159,7 +157,7 @@ class _GoalCard extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: goal.progress,
                 minHeight: 8,
-                backgroundColor: Colors.grey.withOpacity(0.2),
+                backgroundColor: Colors.grey.withAlpha(51),
                 valueColor: AlwaysStoppedAnimation<Color>(progressColor),
               ),
             ),

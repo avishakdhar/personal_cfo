@@ -65,7 +65,7 @@ class _AddRecurringScreenState extends ConsumerState<AddRecurringScreen> {
     if (widget.recurring == null) {
       await ref.read(recurringProvider.notifier).add(rec);
     } else {
-      await ref.read(recurringProvider.notifier).update(rec.id!, rec.toMap()..remove('id'));
+      await ref.read(recurringProvider.notifier).edit(rec.id!, rec.toMap()..remove('id'));
     }
     if (mounted) Navigator.pop(context);
   }
@@ -108,28 +108,28 @@ class _AddRecurringScreenState extends ConsumerState<AddRecurringScreen> {
               const SizedBox(height: 16),
               if (_type == 'expense')
                 DropdownButtonFormField<int>(
-                  value: _fromAccountId,
+                  initialValue: _fromAccountId,
                   items: accounts.map((a) => DropdownMenuItem(value: a.id, child: Text(a.name))).toList(),
                   onChanged: (v) => setState(() => _fromAccountId = v),
                   decoration: const InputDecoration(labelText: 'Pay From', border: OutlineInputBorder()),
                 )
               else
                 DropdownButtonFormField<int>(
-                  value: _toAccountId,
+                  initialValue: _toAccountId,
                   items: accounts.map((a) => DropdownMenuItem(value: a.id, child: Text(a.name))).toList(),
                   onChanged: (v) => setState(() => _toAccountId = v),
                   decoration: const InputDecoration(labelText: 'Deposit To', border: OutlineInputBorder()),
                 ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _category,
+                initialValue: _category,
                 items: categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
                 onChanged: (v) => setState(() => _category = v!),
                 decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _frequency,
+                initialValue: _frequency,
                 items: RecurringTransaction.frequencies
                     .map((f) => DropdownMenuItem(value: f, child: Text(f.toUpperCase())))
                     .toList(),

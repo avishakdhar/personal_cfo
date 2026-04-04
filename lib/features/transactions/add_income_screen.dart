@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/models/transaction_model.dart';
 import '../../core/providers/app_providers.dart';
 
 class AddIncomeScreen extends ConsumerStatefulWidget {
@@ -55,6 +54,7 @@ class _AddIncomeScreenState extends ConsumerState<AddIncomeScreen> {
   @override
   Widget build(BuildContext context) {
     final accountsAsync = ref.watch(accountsProvider);
+    final categoriesAsync = ref.watch(categoriesProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Add Income')),
@@ -83,7 +83,7 @@ class _AddIncomeScreenState extends ConsumerState<AddIncomeScreen> {
               loading: () => const CircularProgressIndicator(),
               error: (e, _) => Text('$e'),
               data: (accounts) => DropdownButtonFormField<int>(
-                value: _selectedAccountId,
+                initialValue: _selectedAccountId,
                 items: accounts
                     .map((a) =>
                         DropdownMenuItem(value: a.id, child: Text(a.name)))
@@ -97,16 +97,33 @@ class _AddIncomeScreenState extends ConsumerState<AddIncomeScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _category,
-              items: TransactionModel.incomeCategories
-                  .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                  .toList(),
-              onChanged: (v) => setState(() => _category = v!),
-              decoration: const InputDecoration(
-                labelText: 'Category',
-                border: OutlineInputBorder(),
-              ),
+            categoriesAsync.when(
+              loading: () => const CircularProgressIndicator(),
+              error: (e, _) => Text('Error: $e'),
+              data: (categories) {
+                final incomeCategories = categories
+                    .where((c) => c.type == 'income')
+                    .map((c) => c.name)
+                    .toList();
+                if (incomeCategories.isEmpty) incomeCategories.add('Income');
+                
+                // Ensure _category is valid
+                if (!incomeCategories.contains(_category)) {
+                  _category = incomeCategories.first;
+                }
+
+                return DropdownButtonFormField<String>(
+                  initialValue: _category,
+                  items: incomeCategories
+                      .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                      .toList(),
+                  onChanged: (v) => setState(() => _category = v!),
+                  decoration: const InputDecoration(
+                    labelText: 'Category',
+                    border: OutlineInputBorder(),
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 16),
             TextFormField(

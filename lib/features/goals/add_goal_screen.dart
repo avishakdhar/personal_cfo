@@ -57,7 +57,7 @@ class _AddGoalScreenState extends ConsumerState<AddGoalScreen> {
     if (widget.goal == null) {
       await ref.read(goalsProvider.notifier).add(goal);
     } else {
-      await ref.read(goalsProvider.notifier).update(goal.id!, goal.toMap()..remove('id'));
+      await ref.read(goalsProvider.notifier).edit(goal.id!, goal.toMap()..remove('id'));
     }
     if (mounted) Navigator.pop(context);
   }
