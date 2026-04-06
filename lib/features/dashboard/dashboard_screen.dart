@@ -8,7 +8,6 @@ import '../../widgets/net_worth_chart.dart';
 import '../transactions/add_expense_screen.dart';
 import '../transactions/add_income_screen.dart';
 import '../transactions/transfer_screen.dart';
-import '../debts/add_debt_screen.dart';
 import '../settings/settings_screen.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -164,17 +163,6 @@ class DashboardScreen extends ConsumerWidget {
                         ref.invalidate(accountsProvider);
                       }),
                     ).animate(delay: 500.ms).scale(),
-                  ),
-                  Expanded(
-                    child: _QuickAction(
-                      icon: Icons.credit_card_rounded,
-                      label: 'Liability',
-                      color: Colors.purple,
-                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AddDebtScreen())).then((_) {
-                        ref.invalidate(dashboardProvider);
-                        ref.invalidate(debtsProvider);
-                      }),
-                    ).animate(delay: 600.ms).scale(),
                   ),
                 ],
               ),

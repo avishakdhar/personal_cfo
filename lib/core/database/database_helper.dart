@@ -18,7 +18,7 @@ class DatabaseHelper {
     final path = join(dbPath, filePath);
     return await openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -85,6 +85,7 @@ class DatabaseHelper {
         quantity REAL NOT NULL DEFAULT 0,
         buy_price REAL NOT NULL,
         current_price REAL NOT NULL,
+        annual_rate REAL NOT NULL DEFAULT 0,
         buy_date TEXT NOT NULL,
         notes TEXT,
         created_at TEXT NOT NULL
@@ -155,7 +156,7 @@ class DatabaseHelper {
     ''');
     
     // Seed default expense categories
-    for (var cat in ['Food', 'Housing', 'Transport', 'Utilities', 'Entertainment', 'Health', 'Debt Repayment', 'Other']) {
+    for (var cat in ['Food', 'Housing', 'Transport', 'Utilities', 'Entertainment', 'Health', 'Debt Repayment', 'Investment', 'Other']) {
       await db.insert('categories', {'name': cat, 'type': 'expense'});
     }
     // Seed default income categories
@@ -213,6 +214,7 @@ class DatabaseHelper {
           name TEXT NOT NULL, type TEXT NOT NULL,
           symbol TEXT, quantity REAL NOT NULL DEFAULT 0,
           buy_price REAL NOT NULL, current_price REAL NOT NULL,
+          annual_rate REAL NOT NULL DEFAULT 0,
           buy_date TEXT NOT NULL, notes TEXT,
           created_at TEXT NOT NULL)''',
         '''CREATE TABLE IF NOT EXISTS debts (
@@ -274,6 +276,18 @@ class DatabaseHelper {
         final existing = await db.query('categories', where: "name = ? AND type = ?", whereArgs: ['Debt Repayment', 'expense']);
         if (existing.isEmpty) {
           await db.insert('categories', {'name': 'Debt Repayment', 'type': 'expense', 'color_hex': '#B00020', 'icon_name': 'credit_card'});
+        }
+      } catch (_) {}
+    }
+
+    if (oldVersion < 5) {
+      // Add annual_rate column to investments
+      try { await db.execute("ALTER TABLE investments ADD COLUMN annual_rate REAL NOT NULL DEFAULT 0"); } catch (_) {}
+      // Add "Investment" expense category
+      try {
+        final existing = await db.query('categories', where: "name = ? AND type = ?", whereArgs: ['Investment', 'expense']);
+        if (existing.isEmpty) {
+          await db.insert('categories', {'name': 'Investment', 'type': 'expense', 'color_hex': '#1B5E20', 'icon_name': 'trending_up'});
         }
       } catch (_) {}
     }
@@ -657,6 +671,29 @@ class DatabaseHelper {
   Future<void> deleteInvestment(int id) async {
     final db = await database;
     await db.delete('investments', where: 'id=?', whereArgs: [id]);
+  }
+
+  /// Adds units to an investment using weighted-average buy price.
+  Future<void> topUpInvestment(int investmentId, double addQty, double pricePerUnit) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      final rows = await txn.query('investments', where: 'id=?', whereArgs: [investmentId]);
+      if (rows.isEmpty) return;
+      final inv = rows.first;
+      final oldQty = (inv['quantity'] as num).toDouble();
+      final oldBuyPrice = (inv['buy_price'] as num).toDouble();
+      final newQty = oldQty + addQty;
+      // Weighted-average buy price
+      final newBuyPrice = newQty > 0
+          ? (oldQty * oldBuyPrice + addQty * pricePerUnit) / newQty
+          : oldBuyPrice;
+      await txn.update(
+        'investments',
+        {'quantity': newQty, 'buy_price': newBuyPrice},
+        where: 'id=?',
+        whereArgs: [investmentId],
+      );
+    });
   }
 
   // ─── DEBTS ───────────────────────────────────────────────────────────────────

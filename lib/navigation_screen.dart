@@ -4,14 +4,11 @@ import 'features/dashboard/dashboard_screen.dart';
 import 'features/accounts/accounts_screen.dart';
 import 'features/transactions/transactions_screen.dart';
 import 'features/budgets/budgets_screen.dart';
-import 'features/ai/ai_chat_screen.dart';
 import 'features/goals/goals_screen.dart';
 import 'features/investments/investments_screen.dart';
 import 'features/debts/debts_screen.dart';
 import 'features/debts/debt_calculator_screen.dart';
 import 'features/recurring/recurring_screen.dart';
-import 'features/ai/ai_insights_screen.dart';
-import 'features/ai/receipt_scan_screen.dart';
 import 'features/reports/reports_screen.dart';
 import 'features/settings/settings_screen.dart';
 
@@ -25,12 +22,13 @@ class NavigationScreen extends StatefulWidget {
 class _NavigationScreenState extends State<NavigationScreen> {
   int _selectedIndex = 0;
 
+  // Bottom nav: Home | Transactions | Budgets | Liabilities | Investments
   final List<Widget> _screens = [
     const DashboardScreen(),
-    const AccountsScreen(),
     const TransactionsScreen(),
     const BudgetsScreen(),
-    const AiChatScreen(),
+    const DebtsScreen(),
+    const InvestmentsScreen(),
   ];
 
   @override
@@ -60,15 +58,15 @@ class _NavigationScreenState extends State<NavigationScreen> {
           selectedIndex: _selectedIndex,
           onDestinationSelected: (index) => setState(() => _selectedIndex = index),
           labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-          height: 64, // Sleeker height
+          height: 64,
           elevation: 0,
           backgroundColor: Theme.of(context).colorScheme.surface,
           destinations: const [
             NavigationDestination(icon: Icon(Icons.dashboard_outlined), selectedIcon: Icon(Icons.dashboard_rounded), label: 'Home'),
-            NavigationDestination(icon: Icon(Icons.account_balance_outlined), selectedIcon: Icon(Icons.account_balance_rounded), label: 'Accounts'),
             NavigationDestination(icon: Icon(Icons.receipt_long_outlined), selectedIcon: Icon(Icons.receipt_long_rounded), label: 'Activity'),
             NavigationDestination(icon: Icon(Icons.savings_outlined), selectedIcon: Icon(Icons.savings_rounded), label: 'Budgets'),
-            NavigationDestination(icon: Icon(Icons.smart_toy_outlined), selectedIcon: Icon(Icons.smart_toy_rounded), label: 'Assistant'),
+            NavigationDestination(icon: Icon(Icons.credit_card_outlined), selectedIcon: Icon(Icons.credit_card_rounded), label: 'Liabilities'),
+            NavigationDestination(icon: Icon(Icons.trending_up_outlined), selectedIcon: Icon(Icons.trending_up_rounded), label: 'Investments'),
           ],
         ),
       ),
@@ -108,14 +106,11 @@ class _NavigationScreenState extends State<NavigationScreen> {
             ),
           ),
           ...[
+            _drawerTile(Icons.account_balance_outlined, 'Accounts', () => _push(const AccountsScreen())),
             _drawerTile(Icons.flag_outlined, 'Goals', () => _push(const GoalsScreen())),
-            _drawerTile(Icons.trending_up_outlined, 'Investments', () => _push(const InvestmentsScreen())),
-            _drawerTile(Icons.credit_card_outlined, 'Debts & Loans', () => _push(const DebtsScreen())),
             _drawerTile(Icons.calculate_outlined, 'Debt Calculator', () => _push(const DebtCalculatorScreen())),
             _drawerTile(Icons.repeat_outlined, 'Recurring', () => _push(const RecurringScreen())),
             const Divider(),
-            _drawerTile(Icons.document_scanner_outlined, 'Scan Receipt', () => _push(const ReceiptScanScreen())),
-            _drawerTile(Icons.insights_outlined, 'AI Insights', () => _push(const AiInsightsScreen())),
             _drawerTile(Icons.bar_chart_outlined, 'Reports', () => _push(const ReportsScreen())),
             const Divider(),
             _drawerTile(Icons.settings_outlined, 'Settings', () => _push(const SettingsScreen())),

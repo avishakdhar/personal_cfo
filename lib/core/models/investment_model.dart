@@ -1,3 +1,5 @@
+import 'dart:math';
+
 class Investment {
   final int? id;
   final String name;
@@ -6,6 +8,7 @@ class Investment {
   final double quantity;
   final double buyPrice;
   final double currentPrice;
+  final double annualRate; // % p.a. — for fixed-income types (FD, PPF, Bonds, NPS)
   final DateTime buyDate;
   final String notes;
   final DateTime createdAt;
@@ -18,16 +21,31 @@ class Investment {
     required this.quantity,
     required this.buyPrice,
     required this.currentPrice,
+    this.annualRate = 0,
     required this.buyDate,
     this.notes = '',
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
+  // For fixed-income types with annual rate, auto-compute current price via compound interest.
+  // Otherwise use stored current_price.
+  double get effectiveCurrentPrice {
+    if (annualRate > 0 && fixedIncomeTypes.contains(type)) {
+      final years = DateTime.now().difference(buyDate).inDays / 365.0;
+      return buyPrice * pow(1 + annualRate / 100, years.clamp(0, double.infinity)).toDouble();
+    }
+    return currentPrice;
+  }
+
   double get totalInvested => quantity * buyPrice;
-  double get currentValue => quantity * currentPrice;
+  double get currentValue => quantity * effectiveCurrentPrice;
   double get profitLoss => currentValue - totalInvested;
   double get profitLossPercent => totalInvested > 0 ? (profitLoss / totalInvested) * 100 : 0;
   bool get isProfit => profitLoss >= 0;
+
+  static const List<String> fixedIncomeTypes = [
+    'Fixed Deposit', 'PPF', 'NPS', 'Bonds',
+  ];
 
   Map<String, dynamic> toMap() => {
         'id': id,
@@ -37,6 +55,7 @@ class Investment {
         'quantity': quantity,
         'buy_price': buyPrice,
         'current_price': currentPrice,
+        'annual_rate': annualRate,
         'buy_date': buyDate.toIso8601String(),
         'notes': notes,
         'created_at': createdAt.toIso8601String(),
@@ -50,6 +69,7 @@ class Investment {
         quantity: (map['quantity'] as num).toDouble(),
         buyPrice: (map['buy_price'] as num).toDouble(),
         currentPrice: (map['current_price'] as num).toDouble(),
+        annualRate: (map['annual_rate'] as num? ?? 0).toDouble(),
         buyDate: DateTime.parse(map['buy_date']),
         notes: map['notes'] ?? '',
         createdAt: DateTime.parse(map['created_at']),
@@ -63,6 +83,7 @@ class Investment {
     double? quantity,
     double? buyPrice,
     double? currentPrice,
+    double? annualRate,
     DateTime? buyDate,
     String? notes,
   }) =>
@@ -74,6 +95,7 @@ class Investment {
         quantity: quantity ?? this.quantity,
         buyPrice: buyPrice ?? this.buyPrice,
         currentPrice: currentPrice ?? this.currentPrice,
+        annualRate: annualRate ?? this.annualRate,
         buyDate: buyDate ?? this.buyDate,
         notes: notes ?? this.notes,
         createdAt: createdAt,

@@ -1,30 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../../core/database/database_helper.dart';
-import '../../core/providers/app_providers.dart';
 import '../../core/services/export_service.dart';
 
-class ReportsScreen extends ConsumerStatefulWidget {
+class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
 
   @override
-  ConsumerState<ReportsScreen> createState() => _ReportsScreenState();
+  State<ReportsScreen> createState() => _ReportsScreenState();
 }
 
-class _ReportsScreenState extends ConsumerState<ReportsScreen> {
+class _ReportsScreenState extends State<ReportsScreen> {
   late int _selectedMonth;
   late int _selectedYear;
   bool _loading = false;
   String? _error;
 
-  // Data
   Map<String, double> _categorySpending = {};
   double _totalSpending = 0;
   double _totalIncome = 0;
   List<Map<String, dynamic>> _monthlyHistory = [];
-  String? _aiSummary;
 
   @override
   void initState() {
@@ -36,14 +32,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
   }
 
   Future<void> _loadData() async {
-    setState(() { _loading = true; _error = null; _aiSummary = null; });
+    setState(() { _loading = true; _error = null; });
     try {
       final db = DatabaseHelper.instance;
       final categorySpending = await db.getCategorySpending(month: _selectedMonth, year: _selectedYear);
       final totalSpending = await db.getTotalSpending(month: _selectedMonth, year: _selectedYear);
       final monthlyHistory = await db.getMonthlySpendingHistory(months: 6);
 
-      // Calculate income for the selected month
       final start = DateTime(_selectedYear, _selectedMonth, 1);
       final end = DateTime(_selectedYear, _selectedMonth + 1, 1);
       final incomeTxs = await db.getTransactions(type: 'income', startDate: start, endDate: end);
@@ -58,48 +53,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       });
     } catch (e) {
       setState(() { _error = e.toString(); _loading = false; });
-    }
-  }
-
-  Future<void> _loadAiSummary() async {
-    final apiKey = ref.read(apiKeyProvider);
-    if (apiKey.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Set API key in Settings to generate AI summaries')),
-      );
-      return;
-    }
-
-    setState(() => _aiSummary = null);
-
-    try {
-      final db = DatabaseHelper.instance;
-      final netWorth = (await db.getTotalAssets()) - (await db.getTotalLiabilities());
-
-      final budgets = await db.getBudgets(month: _selectedMonth, year: _selectedYear);
-      final alerts = <String>[];
-      for (final b in budgets) {
-        final cat = b['category'] as String;
-        final limit = (b['amount_limit'] as num).toDouble();
-        final spent = _categorySpending[cat] ?? 0;
-        if (spent > limit) alerts.add('$cat overspent by ₹${(spent - limit).toStringAsFixed(0)}');
-      }
-
-      final ai = ref.read(aiServiceProvider);
-      final summary = await ai.generateMonthlySummary(
-        income: _totalIncome,
-        expenses: _totalSpending,
-        categoryBreakdown: _categorySpending,
-        netWorth: netWorth,
-        budgetAlerts: alerts,
-      );
-      if (mounted) setState(() => _aiSummary = summary);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('AI error: $e'), backgroundColor: Colors.red),
-        );
-      }
     }
   }
 
@@ -129,7 +82,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final monthLabel = DateFormat('MMMM yyyy').format(DateTime(_selectedYear, _selectedMonth));
     final savings = _totalIncome - _totalSpending;
     final fmt = NumberFormat('#,##,##0', 'en_IN');
@@ -241,47 +193,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                         const SizedBox(height: 12),
                         _MonthlyTrendChart(history: _monthlyHistory),
                       ],
-
-                      const SizedBox(height: 20),
-
-                      // ─── AI Summary ─────────────────────────────────────
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('AI Monthly Summary',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                          TextButton.icon(
-                            icon: const Icon(Icons.auto_awesome, size: 16),
-                            label: const Text('Generate'),
-                            onPressed: _loadAiSummary,
-                          ),
-                        ],
-                      ),
-                      if (_aiSummary != null)
-                        Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Text(_aiSummary!, style: const TextStyle(height: 1.5)),
-                          ),
-                        )
-                      else
-                        Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Row(
-                              children: [
-                                Icon(Icons.auto_awesome_outlined, color: cs.outline),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    'Tap "Generate" for an AI-powered summary of this month.',
-                                    style: TextStyle(color: cs.outline),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
                     ],
                   ),
                 ),
@@ -321,8 +232,7 @@ class _SummaryCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                    Text(value,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                   ],
                 ),
               ),

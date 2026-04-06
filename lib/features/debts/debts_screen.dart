@@ -129,8 +129,9 @@ class DebtsScreen extends ConsumerWidget {
                       child: DropdownButton<int>(
                         value: selectedAccountId,
                         isDense: true,
+                        isExpanded: true,
                         hint: const Text('Select account'),
-                        items: accounts.map((a) => DropdownMenuItem<int>(value: a.id, child: Text('${a.name} (₹${_fmt(a.balance)})'))).toList(),
+                        items: accounts.map((a) => DropdownMenuItem<int>(value: a.id, child: Text(a.name, overflow: TextOverflow.ellipsis))).toList(),
                         onChanged: (v) => setDialogState(() => selectedAccountId = v),
                       ),
                     ),
@@ -238,6 +239,9 @@ class _DebtCard extends StatelessWidget {
                     icon: const Icon(Icons.edit_outlined, size: 16),
                     label: const Text('Edit'),
                     onPressed: onEdit,
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -245,18 +249,22 @@ class _DebtCard extends StatelessWidget {
                   child: OutlinedButton.icon(
                     icon: const Icon(Icons.delete_outline, size: 16),
                     label: const Text('Delete'),
-                    style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                    ),
                     onPressed: onDelete,
                   ),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: FilledButton.tonal(
-                    onPressed: debt.isFullyPaid ? null : onPayEmi,
-                    child: const Text('Pay EMI'),
-                  ),
-                ),
               ],
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.tonal(
+                onPressed: debt.isFullyPaid ? null : onPayEmi,
+                child: const Text('Pay EMI'),
+              ),
             ),
           ],
         ),

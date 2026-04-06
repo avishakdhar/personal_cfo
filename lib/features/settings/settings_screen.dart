@@ -14,34 +14,7 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  final _apiKeyCtrl = TextEditingController();
-  bool _showApiKey = false;
   bool _loading = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _apiKeyCtrl.text = ref.read(apiKeyProvider);
-  }
-
-  @override
-  void dispose() {
-    _apiKeyCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _saveApiKey() async {
-    final key = _apiKeyCtrl.text.trim();
-    await ref.read(apiKeyProvider.notifier).setKey(key);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(key.isEmpty ? 'API key cleared' : 'API key saved'),
-          backgroundColor: key.isEmpty ? Colors.orange : Colors.green,
-        ),
-      );
-    }
-  }
 
   Future<void> _exportCSV() async {
     setState(() => _loading = true);
@@ -104,7 +77,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Future<void> _setPinEnabled(bool enabled) async {
     if (enabled) {
-      // Prompt to set PIN
       final pin = await _showPinSetupDialog();
       if (pin == null) return;
       await ref.read(pinEnabledProvider.notifier).setEnabled(true);
@@ -190,26 +162,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     final isDark = ref.watch(darkModeProvider);
     final pinEnabled = ref.watch(pinEnabledProvider);
-    final apiKey = ref.watch(apiKeyProvider);
-    final aiProvider = ref.watch(aiProviderTypeProvider);
     final cs = Theme.of(context).colorScheme;
-
-    String hint = 'sk-ant-...';
-    String label = 'Claude API Key';
-    String helper = 'Get your key at console.anthropic.com';
-    String providerName = 'Claude';
-
-    if (aiProvider == AiProviderType.openai) {
-      hint = 'sk-proj-...';
-      label = 'OpenAI API Key';
-      helper = 'Get your key at platform.openai.com';
-      providerName = 'OpenAI';
-    } else if (aiProvider == AiProviderType.gemini) {
-      hint = 'AIzaSy...';
-      label = 'Gemini API Key';
-      helper = 'Get your key at aistudio.google.com';
-      providerName = 'Gemini';
-    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
@@ -218,105 +171,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              // ─── AI Configuration ────────────────────────────────────────
-              _SectionHeader('AI Configuration'),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            apiKey.isNotEmpty ? Icons.check_circle : Icons.warning_amber_rounded,
-                            color: apiKey.isNotEmpty ? Colors.green : Colors.orange,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            apiKey.isNotEmpty ? '$providerName API key configured' : 'API key not set — AI features disabled',
-                            style: TextStyle(
-                              color: apiKey.isNotEmpty ? Colors.green : Colors.orange,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      DropdownButtonFormField<AiProviderType>(
-                        initialValue: aiProvider,
-                        items: const [
-                          DropdownMenuItem(value: AiProviderType.claude, child: Text('Anthropic (Claude)')),
-                          DropdownMenuItem(value: AiProviderType.openai, child: Text('OpenAI (GPT-4o)')),
-                          DropdownMenuItem(value: AiProviderType.gemini, child: Text('Google Gemini')),
-                        ],
-                        onChanged: (v) {
-                          if (v != null) ref.read(aiProviderTypeProvider.notifier).setType(v);
-                        },
-                        decoration: const InputDecoration(
-                          labelText: 'AI Model Provider',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      TextField(
-                        controller: _apiKeyCtrl,
-                        obscureText: !_showApiKey,
-                        decoration: InputDecoration(
-                          labelText: label,
-                          hintText: hint,
-                          helperText: helper,
-                          border: const OutlineInputBorder(),
-                          suffixIcon: IconButton(
-                            icon: Icon(_showApiKey ? Icons.visibility_off : Icons.visibility),
-                            onPressed: () => setState(() => _showApiKey = !_showApiKey),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () {
-                                _apiKeyCtrl.clear();
-                                _saveApiKey();
-                              },
-                              child: const Text('Clear'),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: FilledButton(
-                              onPressed: _saveApiKey,
-                              child: const Text('Save Key'),
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (apiKey.isEmpty) ...[
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.withAlpha(20),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.blue.withAlpha(77)),
-                          ),
-                          child: const Text(
-                            'Without an API key, you can still track transactions, accounts, budgets, goals, investments, and debts manually. AI features (chat, insights, auto-categorization) will be unavailable.',
-                            style: TextStyle(fontSize: 12, color: Colors.blue),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
               // ─── Preferences ──────────────────────────────────────────────
               _SectionHeader('Preferences'),
               Card(
@@ -423,19 +277,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         child: Icon(Icons.account_balance_wallet, color: cs.primary, size: 20),
                       ),
                       title: const Text('FinPilot.ai'),
-                      subtitle: const Text('v2.0.0 · AI-powered personal finance'),
+                      subtitle: const Text('v2.0.0 · Personal Finance Manager'),
                     ),
                     const Divider(height: 1),
                     ListTile(
                       leading: const Icon(Icons.storage_outlined),
                       title: const Text('Data Storage'),
                       subtitle: const Text('All data stored locally on device. Nothing shared.'),
-                    ),
-                    const Divider(height: 1),
-                    ListTile(
-                      leading: const Icon(Icons.security_outlined),
-                      title: const Text('Privacy'),
-                      subtitle: const Text('AI queries sent to Anthropic API only when API key is set.'),
                     ),
                   ],
                 ),

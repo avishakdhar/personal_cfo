@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/models/transaction_model.dart';
 import '../../core/providers/app_providers.dart';
-import '../ai/receipt_scan_screen.dart';
 import 'add_expense_screen.dart';
 import 'add_income_screen.dart';
 import 'edit_transaction_screen.dart';
@@ -123,27 +122,11 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                   icon: const Icon(Icons.search),
                   onPressed: () => setState(() => _showSearch = true),
                 ),
-                PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert),
-                  onSelected: (v) {
-                    if (v == 'scan') {
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (_) => const ReceiptScanScreen())).then((_) {
-                        ref.invalidate(transactionsProvider);
-                        ref.invalidate(accountsProvider);
-                        ref.invalidate(dashboardProvider);
-                      });
-                    }
-                  },
-                  itemBuilder: (_) => [
-                    const PopupMenuItem(value: 'scan', child: Text('Scan Receipt')),
-                  ],
-                ),
               ],
         bottom: TabBar(
           controller: _tabCtrl,
           isScrollable: true,
-          tabAlignment: TabAlignment.start,
+          tabAlignment: TabAlignment.center,
           tabs: _tabs.map((t) => Tab(text: t)).toList(),
         ),
       ),

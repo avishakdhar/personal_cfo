@@ -35,6 +35,8 @@ class _DebtCalculatorScreenState extends ConsumerState<DebtCalculatorScreen>
         title: const Text('Debt Calculator'),
         bottom: TabBar(
           controller: _tabCtrl,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
           tabs: const [
             Tab(text: 'EMI Calc'),
             Tab(text: 'Amortization'),

@@ -21,7 +21,7 @@ class InvestmentsScreen extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          FloatingActionButton.small(
+          FloatingActionButton(
             heroTag: 'sip',
             tooltip: 'Add SIP Installment',
             onPressed: () => Navigator.push(context,
@@ -120,7 +120,24 @@ class InvestmentsScreen extends ConsumerWidget {
                 onEdit: () => Navigator.push(context,
                     MaterialPageRoute(builder: (_) => AddInvestmentScreen(investment: inv)))
                   .then((_) => ref.invalidate(investmentsProvider)),
-                onDelete: () => ref.read(investmentsProvider.notifier).delete(inv.id!),
+                onDelete: () async {
+                  final ok = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Delete investment?'),
+                      content: Text('Delete "${inv.name}"? This cannot be undone.'),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                        FilledButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                          child: const Text('Delete'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (ok == true) ref.read(investmentsProvider.notifier).delete(inv.id!);
+                },
               )),
             ],
           );
@@ -141,40 +158,95 @@ class _InvestmentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pnl = investment.profitLoss;
+    final inv = investment;
+    final pnl = inv.profitLoss;
     final pnlColor = pnl >= 0 ? Colors.green : Colors.red;
+    // Growth ratio: 0 = no growth, 1 = doubled
+    final growthRatio = inv.totalInvested > 0
+        ? (inv.currentValue / inv.totalInvested).clamp(0.0, 2.0) / 2.0
+        : 0.0;
+    final isFixedIncome = Investment.fixedIncomeTypes.contains(inv.type);
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-          child: Text(investment.type.substring(0, 1), style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
-        ),
-        title: Text(investment.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Text('${investment.type}${investment.symbol != null ? ' · ${investment.symbol}' : ''} · Qty: ${investment.quantity}'),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisAlignment: MainAxisAlignment.center,
+            Row(
               children: [
-                Text('₹${_fmt(investment.currentValue)}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text(
-                  '${pnl >= 0 ? '+' : ''}₹${_fmt(pnl)} (${investment.profitLossPercent.toStringAsFixed(1)}%)',
-                  style: TextStyle(fontSize: 11, color: pnlColor),
+                CircleAvatar(
+                  backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                  child: Text(
+                    inv.type.substring(0, 1),
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(inv.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                      Text(
+                        '${inv.type}${inv.symbol != null ? ' · ${inv.symbol}' : ''} · Qty: ${inv.quantity}',
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text('₹${_fmt(inv.currentValue)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    Text(
+                      '${pnl >= 0 ? '+' : ''}₹${_fmt(pnl)} (${inv.profitLossPercent.toStringAsFixed(1)}%)',
+                      style: TextStyle(fontSize: 11, color: pnlColor),
+                    ),
+                  ],
                 ),
               ],
             ),
-            PopupMenuButton<String>(
-              onSelected: (v) {
-                if (v == 'edit') onEdit();
-                if (v == 'delete') onDelete();
-              },
-              itemBuilder: (_) => [
-                const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                const PopupMenuItem(value: 'delete', child: Text('Delete')),
+            const SizedBox(height: 10),
+            // Progress bar: invested → current value
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: growthRatio,
+                minHeight: 6,
+                backgroundColor: Colors.grey.withAlpha(51),
+                valueColor: AlwaysStoppedAnimation<Color>(pnlColor),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Invested: ₹${_fmt(inv.totalInvested)}', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                if (isFixedIncome && inv.annualRate > 0)
+                  Text('${inv.annualRate}% p.a.', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.edit_outlined, size: 16),
+                    label: const Text('Edit'),
+                    onPressed: onEdit,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.delete_outline, size: 16),
+                    label: const Text('Delete'),
+                    style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                    onPressed: onDelete,
+                  ),
+                ),
               ],
             ),
           ],

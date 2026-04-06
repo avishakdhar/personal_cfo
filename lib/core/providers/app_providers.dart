@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../database/database_helper.dart';
 import '../models/account_model.dart';
@@ -11,7 +10,6 @@ import '../models/debt_model.dart';
 import '../models/recurring_transaction_model.dart';
 import '../models/net_worth_snapshot_model.dart';
 import '../models/category_model.dart';
-import '../services/ai_service.dart';
 
 // ─── SETTINGS ────────────────────────────────────────────────────────────────
 
@@ -53,57 +51,6 @@ class UserNameNotifier extends StateNotifier<String> {
     await _prefs.setString('user_name', name);
   }
 }
-
-final apiKeyProvider = StateNotifierProvider<ApiKeyNotifier, String>((ref) {
-  return ApiKeyNotifier();
-});
-
-class ApiKeyNotifier extends StateNotifier<String> {
-  static const _storage = FlutterSecureStorage();
-  static const _storageKey = 'api_key';
-
-  ApiKeyNotifier() : super('') {
-    _loadKey();
-  }
-
-  Future<void> _loadKey() async {
-    final key = await _storage.read(key: _storageKey);
-    if (mounted) state = key ?? '';
-  }
-
-  Future<void> setKey(String key) async {
-    state = key;
-    await _storage.write(key: _storageKey, value: key);
-  }
-}
-
-enum AiProviderType { claude, openai, gemini }
-
-final aiProviderTypeProvider = StateNotifierProvider<AiProviderTypeNotifier, AiProviderType>((ref) {
-  final prefs = ref.watch(sharedPreferencesProvider);
-  return AiProviderTypeNotifier(prefs);
-});
-
-class AiProviderTypeNotifier extends StateNotifier<AiProviderType> {
-  final SharedPreferences _prefs;
-  AiProviderTypeNotifier(this._prefs) : super(_parse(_prefs.getString('ai_provider_type')));
-
-  static AiProviderType _parse(String? val) {
-    if (val == null) return AiProviderType.claude;
-    return AiProviderType.values.firstWhere((e) => e.name == val, orElse: () => AiProviderType.claude);
-  }
-
-  Future<void> setType(AiProviderType type) async {
-    state = type;
-    await _prefs.setString('ai_provider_type', type.name);
-  }
-}
-
-final aiServiceProvider = Provider<AiService>((ref) {
-  final key = ref.watch(apiKeyProvider);
-  final providerType = ref.watch(aiProviderTypeProvider);
-  return AiService(key, providerType);
-});
 
 // PIN auth
 final pinEnabledProvider = StateNotifierProvider<PinEnabledNotifier, bool>((ref) {
@@ -452,6 +399,13 @@ class InvestmentsNotifier extends AsyncNotifier<List<Investment>> {
   Future<void> delete(int id) async {
     await DatabaseHelper.instance.deleteInvestment(id);
     ref.invalidateSelf();
+    ref.invalidate(dashboardProvider);
+  }
+
+  Future<void> topUp(int investmentId, double addQty, double pricePerUnit) async {
+    await DatabaseHelper.instance.topUpInvestment(investmentId, addQty, pricePerUnit);
+    ref.invalidateSelf();
+    ref.invalidate(dashboardProvider);
   }
 }
 

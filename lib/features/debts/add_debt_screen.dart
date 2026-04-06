@@ -86,7 +86,7 @@ class _AddDebtScreenState extends ConsumerState<AddDebtScreen> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + MediaQuery.of(context).padding.bottom),
           children: [
             TextFormField(controller: _nameCtrl, decoration: const InputDecoration(labelText: 'Debt Name', border: OutlineInputBorder()), validator: (v) => v == null || v.isEmpty ? 'Required' : null),
             const SizedBox(height: 16),

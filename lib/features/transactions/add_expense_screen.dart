@@ -24,11 +24,12 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
   final _formKey = GlobalKey<FormState>();
   final _amountCtrl = TextEditingController();
   final _noteCtrl = TextEditingController();
+  final _unitsCtrl = TextEditingController();
   String _category = 'Food';
   int? _selectedAccountId;
   int? _linkedDebtId;
+  int? _linkedInvestmentId;
   bool _saving = false;
-  bool _aiLoading = false;
 
   @override
   void initState() {
@@ -44,29 +45,8 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
   void dispose() {
     _amountCtrl.dispose();
     _noteCtrl.dispose();
+    _unitsCtrl.dispose();
     super.dispose();
-  }
-
-  Future<void> _getAiCategory() async {
-    if (_noteCtrl.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a note first')),
-      );
-      return;
-    }
-    setState(() => _aiLoading = true);
-    try {
-      final ai = ref.read(aiServiceProvider);
-      final category = await ai.categorizeTransaction(_noteCtrl.text);
-      setState(() => _category = category);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('AI error: $e')));
-      }
-    } finally {
-      setState(() => _aiLoading = false);
-    }
   }
 
   Future<void> _save() async {
@@ -83,6 +63,12 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
       );
       return;
     }
+    if (_category == 'Investment' && _linkedInvestmentId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Select which investment to top up')),
+      );
+      return;
+    }
     setState(() => _saving = true);
     try {
       final amount = double.parse(_amountCtrl.text);
@@ -96,6 +82,11 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
         await DatabaseHelper.instance.reduceDebtOutstanding(_linkedDebtId!, amount);
         ref.invalidate(debtsProvider);
         ref.invalidate(dashboardProvider);
+      }
+      if (_linkedInvestmentId != null) {
+        final units = double.tryParse(_unitsCtrl.text) ?? 0;
+        final pricePerUnit = units > 0 ? amount / units : amount;
+        await ref.read(investmentsProvider.notifier).topUp(_linkedInvestmentId!, units > 0 ? units : 1, pricePerUnit);
       }
       if (mounted) Navigator.pop(context);
     } catch (e) {
@@ -122,8 +113,7 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
           children: [
             TextFormField(
               controller: _amountCtrl,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
               decoration: const InputDecoration(
                 labelText: 'Amount',
                 prefixText: '₹ ',
@@ -164,10 +154,10 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
                       final expenseCategories = categories
                           .where((c) => c.type == 'expense')
                           .map((c) => c.name)
+                          .toSet()
                           .toList();
                       if (expenseCategories.isEmpty) expenseCategories.add('Food');
-                      
-                      // Ensure _category is valid
+
                       if (!expenseCategories.contains(_category)) {
                         _category = expenseCategories.first;
                       }
@@ -177,7 +167,11 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
                         items: expenseCategories
                             .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                             .toList(),
-                        onChanged: (v) => setState(() => _category = v!),
+                        onChanged: (v) => setState(() {
+                          _category = v!;
+                          _linkedDebtId = null;
+                          _linkedInvestmentId = null;
+                        }),
                         decoration: const InputDecoration(
                           labelText: 'Category',
                           border: OutlineInputBorder(),
@@ -186,22 +180,9 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
                     },
                   ),
                 ),
-                const SizedBox(width: 8),
-                Tooltip(
-                  message: 'AI suggest category',
-                  child: FilledButton.tonal(
-                    onPressed: _aiLoading ? null : _getAiCategory,
-                    child: _aiLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.smart_toy_outlined),
-                  ),
-                ),
               ],
             ),
+            // ── Debt Repayment linking ──────────────────────────────────────
             if (_category == 'Debt Repayment') ...[
               const SizedBox(height: 16),
               ref.watch(debtsProvider).when(
@@ -230,6 +211,49 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
                     ),
                   );
                 },
+              ),
+            ],
+            // ── Investment top-up linking ───────────────────────────────────
+            if (_category == 'Investment') ...[
+              const SizedBox(height: 16),
+              ref.watch(investmentsProvider).when(
+                loading: () => const CircularProgressIndicator(),
+                error: (e, _) => Text('Error: $e'),
+                data: (investments) => InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: 'Top up which investment?',
+                    border: OutlineInputBorder(),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<int>(
+                      value: _linkedInvestmentId,
+                      isDense: true,
+                      hint: const Text('Select investment'),
+                      items: investments
+                          .map((inv) => DropdownMenuItem<int>(
+                                value: inv.id,
+                                child: Text('${inv.name} (${inv.type})'),
+                              ))
+                          .toList(),
+                      onChanged: (v) => setState(() => _linkedInvestmentId = v),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _unitsCtrl,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  labelText: 'Units purchased (optional)',
+                  hintText: 'Leave blank to treat full amount as 1 unit',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'The expense amount will be deducted from your account. Units will be added to the selected investment.',
+                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.primary),
               ),
             ],
             const SizedBox(height: 16),

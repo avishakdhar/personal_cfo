@@ -13,13 +13,11 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _pageController = PageController();
-  final _apiKeyCtrl = TextEditingController();
   final _nameCtrl = TextEditingController();
-  bool _showApiKey = false;
   int _currentPage = 0;
 
-  // Profile page (1) + Info pages (4) + API key setup page (1) = 6 total
-  static const int _totalPages = 6;
+  // Profile page (1) + Info pages (3) = 4 total
+  static const int _totalPages = 4;
 
   final _infoPages = const [
     _OnboardingPage(
@@ -40,18 +38,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       body: 'Monitor your stock, mutual fund, and FD portfolio. Track loans and EMI schedules.',
       color: Color(0xFFE65100),
     ),
-    _OnboardingPage(
-      icon: Icons.smart_toy,
-      title: 'AI-Powered Insights',
-      body: 'FinPilot.ai categorizes spending, detects anomalies, forecasts cash flow, and answers financial questions.',
-      color: Color(0xFF1565C0),
-    ),
   ];
 
   @override
   void dispose() {
     _pageController.dispose();
-    _apiKeyCtrl.dispose();
     _nameCtrl.dispose();
     super.dispose();
   }
@@ -68,19 +59,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 
   Future<void> _finish() async {
-    // Save profile name
     final name = _nameCtrl.text.trim();
     if (name.isNotEmpty) {
       await ref.read(userNameProvider.notifier).setName(name);
     }
 
-    // Save API key if entered
-    final key = _apiKeyCtrl.text.trim();
-    if (key.isNotEmpty) {
-      await ref.read(apiKeyProvider.notifier).setKey(key);
-    }
-
-    // Request notification permission
     try {
       await NotificationService.instance.requestPermission();
     } catch (_) {}
@@ -117,15 +100,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 children: [
                   _ProfileSetupPage(controller: _nameCtrl),
                   ..._infoPages,
-                  _ApiKeySetupPage(
-                    controller: _apiKeyCtrl,
-                    showKey: _showApiKey,
-                    onToggleShow: () => setState(() => _showApiKey = !_showApiKey),
-                  ),
                 ],
               ),
             ),
-            // Page indicator
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
@@ -145,21 +122,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             const SizedBox(height: 24),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                children: [
-                  FilledButton(
-                    onPressed: _nextPage,
-                    style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
-                    child: Text(isLastPage ? 'Get Started' : 'Next'),
-                  ),
-                  if (isLastPage) ...[
-                    const SizedBox(height: 8),
-                    TextButton(
-                      onPressed: _finish,
-                      child: const Text('Skip for now — set up AI later in Settings'),
-                    ),
-                  ],
-                ],
+              child: FilledButton(
+                onPressed: _nextPage,
+                style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+                child: Text(isLastPage ? 'Get Started' : 'Next'),
               ),
             ),
             const SizedBox(height: 24),
@@ -170,11 +136,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 }
 
-// ─── Profile Setup Page ───────────────────────────────────────────────────────
-
 class _ProfileSetupPage extends StatelessWidget {
   final TextEditingController controller;
-
   const _ProfileSetupPage({required this.controller});
 
   @override
@@ -202,7 +165,7 @@ class _ProfileSetupPage extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'What should we call you? FinPilot.ai is ready to assist.',
+            'What should we call you?',
             style: TextStyle(color: cs.onSurface.withAlpha(179), fontSize: 15, height: 1.5),
             textAlign: TextAlign.center,
           ),
@@ -211,7 +174,7 @@ class _ProfileSetupPage extends StatelessWidget {
             controller: controller,
             textCapitalization: TextCapitalization.words,
             decoration: const InputDecoration(
-              labelText: 'Legal or Preferred Name',
+              labelText: 'Your Name',
               hintText: 'e.g. John Doe',
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.badge_outlined),
@@ -222,96 +185,6 @@ class _ProfileSetupPage extends StatelessWidget {
     );
   }
 }
-
-// ─── API Key Setup Page ───────────────────────────────────────────────────────
-
-class _ApiKeySetupPage extends StatelessWidget {
-  final TextEditingController controller;
-  final bool showKey;
-  final VoidCallback onToggleShow;
-
-  const _ApiKeySetupPage({
-    required this.controller,
-    required this.showKey,
-    required this.onToggleShow,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 28),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              color: const Color(0xFF1565C0).withAlpha(26),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.key_outlined, size: 50, color: Color(0xFF1565C0)),
-          ),
-          const SizedBox(height: 28),
-          Text(
-            'Set Up AI Features',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Enter your Claude API key to enable AI chat, auto-categorization, receipt scanning, and spending insights.',
-            style: TextStyle(
-              color: cs.onSurface.withAlpha(179),
-              fontSize: 15,
-              height: 1.5,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          TextField(
-            controller: controller,
-            obscureText: !showKey,
-            decoration: InputDecoration(
-              labelText: 'Claude API Key (optional)',
-              hintText: 'sk-ant-...',
-              helperText: 'Get your free key at console.anthropic.com',
-              border: const OutlineInputBorder(),
-              suffixIcon: IconButton(
-                icon: Icon(showKey ? Icons.visibility_off : Icons.visibility),
-                onPressed: onToggleShow,
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: cs.primaryContainer.withAlpha(128),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.shield_outlined, color: cs.primary, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Your key is stored locally on your device only. '
-                    'It\'s never shared with anyone except Anthropic\'s servers for AI queries.',
-                    style: TextStyle(fontSize: 12, color: cs.onPrimaryContainer),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Info Page ────────────────────────────────────────────────────────────────
 
 class _OnboardingPage extends StatelessWidget {
   final IconData icon;

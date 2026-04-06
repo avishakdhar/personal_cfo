@@ -104,6 +104,7 @@ class _AddIncomeScreenState extends ConsumerState<AddIncomeScreen> {
                 final incomeCategories = categories
                     .where((c) => c.type == 'income')
                     .map((c) => c.name)
+                    .toSet()
                     .toList();
                 if (incomeCategories.isEmpty) incomeCategories.add('Income');
                 
