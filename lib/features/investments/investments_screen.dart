@@ -5,6 +5,7 @@ import '../../core/models/investment_model.dart';
 import '../../core/providers/app_providers.dart';
 import 'add_investment_screen.dart';
 import 'add_sip_screen.dart';
+import '../../core/navigation_key.dart';
 
 class InvestmentsScreen extends ConsumerWidget {
   const InvestmentsScreen({super.key});
@@ -16,7 +17,10 @@ class InvestmentsScreen extends ConsumerWidget {
     final invAsync = ref.watch(investmentsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Investments')),
+      appBar: AppBar(
+        title: const Text('Investments'),
+        leading: IconButton(icon: const Icon(Icons.menu), onPressed: () => navigationScaffoldKey.currentState?.openDrawer()),
+      ),
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,

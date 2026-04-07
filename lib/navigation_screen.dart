@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'core/navigation_key.dart';
 import 'features/dashboard/dashboard_screen.dart';
 import 'features/accounts/accounts_screen.dart';
 import 'features/transactions/transactions_screen.dart';
@@ -22,11 +23,11 @@ class NavigationScreen extends StatefulWidget {
 class _NavigationScreenState extends State<NavigationScreen> {
   int _selectedIndex = 0;
 
-  // Bottom nav: Home | Transactions | Budgets | Liabilities | Investments
+  // Bottom nav: Home | Accounts | Activity | Liabilities | Investments
   final List<Widget> _screens = [
     const DashboardScreen(),
+    const AccountsScreen(),
     const TransactionsScreen(),
-    const BudgetsScreen(),
     const DebtsScreen(),
     const InvestmentsScreen(),
   ];
@@ -34,6 +35,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: navigationScaffoldKey,
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
         switchInCurve: Curves.easeOut,
@@ -63,8 +65,8 @@ class _NavigationScreenState extends State<NavigationScreen> {
           backgroundColor: Theme.of(context).colorScheme.surface,
           destinations: const [
             NavigationDestination(icon: Icon(Icons.dashboard_outlined), selectedIcon: Icon(Icons.dashboard_rounded), label: 'Home'),
+            NavigationDestination(icon: Icon(Icons.account_balance_outlined), selectedIcon: Icon(Icons.account_balance_rounded), label: 'Accounts'),
             NavigationDestination(icon: Icon(Icons.receipt_long_outlined), selectedIcon: Icon(Icons.receipt_long_rounded), label: 'Activity'),
-            NavigationDestination(icon: Icon(Icons.savings_outlined), selectedIcon: Icon(Icons.savings_rounded), label: 'Budgets'),
             NavigationDestination(icon: Icon(Icons.credit_card_outlined), selectedIcon: Icon(Icons.credit_card_rounded), label: 'Liabilities'),
             NavigationDestination(icon: Icon(Icons.trending_up_outlined), selectedIcon: Icon(Icons.trending_up_rounded), label: 'Investments'),
           ],
@@ -106,7 +108,7 @@ class _NavigationScreenState extends State<NavigationScreen> {
             ),
           ),
           ...[
-            _drawerTile(Icons.account_balance_outlined, 'Accounts', () => _push(const AccountsScreen())),
+            _drawerTile(Icons.savings_outlined, 'Budgets', () => _push(const BudgetsScreen())),
             _drawerTile(Icons.flag_outlined, 'Goals', () => _push(const GoalsScreen())),
             _drawerTile(Icons.calculate_outlined, 'Debt Calculator', () => _push(const DebtCalculatorScreen())),
             _drawerTile(Icons.repeat_outlined, 'Recurring', () => _push(const RecurringScreen())),

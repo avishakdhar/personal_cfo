@@ -6,6 +6,7 @@ import '../../core/providers/app_providers.dart';
 import 'add_account_screen.dart';
 import 'account_detail_screen.dart';
 import '../transactions/transfer_screen.dart';
+import '../../core/navigation_key.dart';
 
 class AccountsScreen extends ConsumerWidget {
   const AccountsScreen({super.key});
@@ -19,6 +20,7 @@ class AccountsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Accounts'),
+        leading: IconButton(icon: const Icon(Icons.menu), onPressed: () => navigationScaffoldKey.currentState?.openDrawer()),
         actions: [
           IconButton(
             icon: const Icon(Icons.swap_horiz),

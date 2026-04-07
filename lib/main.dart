@@ -58,7 +58,7 @@ class PersonalCFOApp extends ConsumerWidget {
     final textTheme = GoogleFonts.outfitTextTheme();
     
     return MaterialApp(
-      title: 'FinPilot.ai',
+      title: 'FinPilot - Your Personal Finance Manager',
       debugShowCheckedModeBanner: false,
       themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
       theme: ThemeData(

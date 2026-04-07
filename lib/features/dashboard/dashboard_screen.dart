@@ -9,6 +9,7 @@ import '../transactions/add_expense_screen.dart';
 import '../transactions/add_income_screen.dart';
 import '../transactions/transfer_screen.dart';
 import '../settings/settings_screen.dart';
+import '../../core/navigation_key.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -25,6 +26,7 @@ class DashboardScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Hello, $userName', style: const TextStyle(fontWeight: FontWeight.w600)),
+        leading: IconButton(icon: const Icon(Icons.menu), onPressed: () => navigationScaffoldKey.currentState?.openDrawer()),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined),

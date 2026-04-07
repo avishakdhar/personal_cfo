@@ -6,6 +6,7 @@ import '../../core/providers/app_providers.dart';
 import 'add_expense_screen.dart';
 import 'add_income_screen.dart';
 import 'edit_transaction_screen.dart';
+import '../../core/navigation_key.dart';
 
 class TransactionsScreen extends ConsumerStatefulWidget {
   const TransactionsScreen({super.key});
@@ -84,6 +85,9 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
 
     return Scaffold(
       appBar: AppBar(
+        leading: _showSearch
+            ? null
+            : IconButton(icon: const Icon(Icons.menu), onPressed: () => navigationScaffoldKey.currentState?.openDrawer()),
         title: _showSearch
             ? TextField(
                 controller: _searchCtrl,

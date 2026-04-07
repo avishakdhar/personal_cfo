@@ -5,6 +5,7 @@ import '../../core/models/debt_model.dart';
 import '../../core/providers/app_providers.dart';
 import 'add_debt_screen.dart';
 import 'debt_calculator_screen.dart';
+import '../../core/navigation_key.dart';
 
 class DebtsScreen extends ConsumerWidget {
   const DebtsScreen({super.key});
@@ -18,6 +19,7 @@ class DebtsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Debts & Loans'),
+        leading: IconButton(icon: const Icon(Icons.menu), onPressed: () => navigationScaffoldKey.currentState?.openDrawer()),
         actions: [
           IconButton(
             icon: const Icon(Icons.calculate_outlined),
